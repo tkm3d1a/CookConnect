@@ -245,24 +245,57 @@ VisibilitySettings:
 This is a object that is stored as a JSON in the db, available for scaling at a later date
 ```
 
-### User Data Model (WIP)
+### User Data Model
 
 ```default
 User:
-- ID, username, email
-- Profile (name, bio, profile image)
-- Preferences (dietary restrictions, skill level)
-- Privacy settings, account status
+- ID::uuid
+- username::String
+- email::String
+- profile::ProfileInfo
+- skillLevel::Int
+- restrictions::String[]
+- socialID::uuid
+- isPrivate::Boolean
+- isClosed::Boolean
+- createdAt::Date
+- updatedAt::Date
+
+socialID is used for fetching social details for this user from the social service
+```
+
+```default
+ProfileInfo:
+- [pk]ID::uuid
+- [fk]userID::uuid
+- firstName::String
+- lastName::String
 ```
 
 ### Social Data Model (WIP)
 
 ```default
 Social Interactions:
-- User relationships (followers/following)
-- Recipe bookmarks and ratings
-- Activity feed data
-- User collections/cookbooks
+- ID::uuid
+- userID::uuid
+- following::uuid[]
+- followedBy::uuid[]
+- bookmarkedRecipes::uuid[]
+- cookBooks::uuid[]
+```
+
+```default
+Cook Book:
+- ID::uuid
+- entryIDs::uuid[]
+- notes::String
+```
+
+```default
+Cook book entry:
+- ID::uuid
+- recipeID::uuid
+- notes::String
 ```
 
 ## Non-Functional Requirements
