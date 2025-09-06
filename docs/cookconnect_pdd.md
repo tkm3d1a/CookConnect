@@ -1,4 +1,4 @@
-# CookConnect - Product Requirements Document (PRD)
+# CookConnect - Product Definition Document (PDD)
 
 ## Product Overview
 
@@ -15,25 +15,13 @@ CookConnect is a practical recipe management platform that enables home cooks to
 
 To simplify recipe management for home cooks while fostering a supportive community where culinary knowledge and creativity can be shared and preserved.
 
-## Product Goals & Success Metrics
+## Product Goals
 
 ### Primary Goals
 
 1. **Recipe Management**: Provide a reliable, searchable repository for personal recipe collections
 2. **Knowledge Sharing**: Enable users to share successful recipes and cooking discoveries
 3. **Community Building**: Create connections between users with similar cooking interests and skill levels
-
-### Success Metrics
-
-Success metrics below are design based on an API only design.  Functional front end is not fully planned or designed at this time, and metrics for the front end will be determined at a later date.
-
-- API endpoint response times (< 500ms for CRUD operations)
-- Recipe creation rate via API (target: 2+ recipes per active user per month)
-- Service availability (99.5% uptime target)  
-- Database query performance benchmarks
-- Container startup times (< 30 seconds)
-- JWT token validation performance (< 200ms)
-- Successful authentication rate (> 99% for valid tokens)
 
 ## Target Users
 
@@ -57,7 +45,7 @@ Success metrics below are design based on an API only design.  Functional front 
 - Pain Points: Overwhelming choice on recipe websites, unreliable ratings
 - Goals: Find tried-and-tested recipes from real home cooks
 
-## Core Features & Requirements
+## Core Features & Flows
 
 ### Recipe Management Service
 
@@ -113,38 +101,6 @@ Success metrics below are design based on an API only design.  Functional front 
 - User-to-user messaging
 - Recipe recommendation engine based on preferences
 
-## Technical Requirements
-
-### Platform Requirements
-
-- **Backend**: Spring Boot (Java 17), microservices architecture
-- **Authentication**: Keycloak integration
-- **Database**: PostgreSQL (separate databases per service)
-- **Message Queue**: RabbitMQ for async communication
-- **Service Discovery**: Spring Cloud Eureka
-- **API Gateway**: Spring Cloud Gateway
-- **Monitoring**: Centralized logging with ELK stack
-- **Deployment**: Cloud-ready (AWS/Heroku compatible)
-
-### Performance Requirements
-
-- Recipe search results: < 500ms response time
-- User authentication: < 200ms token validation
-- System availability: 99.5% uptime target
-
-### Security Requirements
-
-- All user data encrypted in transit (HTTPS)
-- Sensitive data encrypted at rest
-- Role-based access control
-- API rate limiting
-- Input validation and sanitization
-- Secure session management through Keycloak
-
-## User Experience Requirements
-
-UX Requirements are only defined in the context of future implementation.  API first development may imply explicit restrictions on these defined flows, and API and data model design will take priority at any conflict point.
-
 ### Core User Flows
 
 **Recipe Creation Flow:**
@@ -179,7 +135,7 @@ UX Requirements are only defined in the context of future implementation.  API f
 - High contrast mode support
 - Mobile-responsive design
 
-## Data Requirements
+## Data Models
 
 ### Recipe Data Model
 
@@ -272,7 +228,7 @@ ProfileInfo:
 - lastName::String
 ```
 
-### Social Data Model (WIP)
+### Social Data Model
 
 ```default
 Social Interactions:
@@ -342,28 +298,6 @@ Cook book entry:
 - **V2.0**: Mobile app development
 - **V2.1**: Nutritional analysis service
 - **V3.0**: Smart kitchen device integration
-
-## Success Criteria & Launch Requirements
-
-Success criteria and launch requirements are defined as an excercise only at this point.  This is a learning project meant for internal development only at this point in time.  These criteria will be used only in the case of full public exposure and generally follow project guidelines provide by project ideation source material.
-
-### Minimum Viable Product (MVP) Criteria
-
-- All three core services operational and communicating
-- User registration and authentication working
-- Recipe CRUD operations functional
-- Basic search and discovery features
-- Social following and bookmarking features
-- Deployed to cloud environment with monitoring
-
-### Launch Readiness Checklist
-
-- [ ] All security requirements implemented
-- [ ] Performance benchmarks met
-- [ ] Monitoring and logging operational
-- [ ] User acceptance testing completed
-- [ ] Documentation complete (API docs, user guides)
-- [ ] Backup and recovery procedures tested
 
 ---
 
