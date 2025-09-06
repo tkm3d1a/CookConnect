@@ -205,16 +205,16 @@ This is a object that is stored as a JSON in the db, available for scaling at a 
 
 ```default
 User:
-- ID::uuid
-- username::String
-- email::String
+- [pk]ID::uuid
+- [nn]username::String
+- [nn]email::String
 - profile::ProfileInfo
-- skillLevel::Int
+- [nn]skillLevel::Int
 - restrictions::String[]
-- socialID::uuid
+- [nn]socialID::uuid
 - isPrivate::Boolean
 - isClosed::Boolean
-- createdAt::Date
+- [nn]createdAt::Date
 - updatedAt::Date
 
 socialID is used for fetching social details for this user from the social service
@@ -224,7 +224,7 @@ socialID is used for fetching social details for this user from the social servi
 ProfileInfo:
 - [pk]ID::uuid
 - [fk]userID::uuid
-- firstName::String
+- [nn]firstName::String
 - lastName::String
 ```
 
@@ -232,8 +232,8 @@ ProfileInfo:
 
 ```default
 Social Interactions:
-- ID::uuid
-- userID::uuid
+- [pk]ID::uuid
+- [nn]userID::uuid
 - following::uuid[]
 - followedBy::uuid[]
 - bookmarkedRecipes::uuid[]
@@ -242,15 +242,15 @@ Social Interactions:
 
 ```default
 Cook Book:
-- ID::uuid
+- [pk]ID::uuid
 - entryIDs::uuid[]
 - notes::String
 ```
 
 ```default
 Cook book entry:
-- ID::uuid
-- recipeID::uuid
+- [pk]ID::uuid
+- [nn]recipeID::uuid
 - notes::String
 ```
 
