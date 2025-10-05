@@ -17,5 +17,5 @@
 .DS_Store
 
 ### Env ###
-
 **/.env**
+**/target/
