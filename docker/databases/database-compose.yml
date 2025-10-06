@@ -1,0 +1,49 @@
+services:
+  recipes-db:
+    image: 'mysql:9.4'
+    container_name: recipes-db
+    restart: unless-stopped
+    volumes:
+      - recipes-data:/var/lib/mysql
+    networks:
+      cookconnect-network:
+    ports:
+      - '3306:3306'
+    env_file:
+      - ./.env
+      - ./.env-recipe
+  socials-db:
+    image: 'mysql:9.4'
+    container_name: socials-db
+    restart: unless-stopped
+    volumes:
+      - socials-data:/var/lib/mysql
+    networks:
+      cookconnect-network:
+    ports:
+      - '3307:3306'
+    env_file:
+      - ./.env
+      - ./.env-social
+  users-db:
+    image: 'mysql:9.4'
+    container_name: users-db
+    restart: unless-stopped
+    volumes:
+      - users-data:/var/lib/mysql
+    networks:
+      cookconnect-network:
+    ports:
+      - '3308:3306'
+    env_file:
+      - ./.env
+      - ./.env-users
+
+volumes:
+  recipes-data:
+  socials-data:
+  users-data:
+
+networks:
+  cookconnect-network:
+    external: true
