@@ -20,6 +20,6 @@ public class InstructionListItem {
     @Column(nullable = false)
     private int stepNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false, cascade = CascadeType.ALL)
     private Instruction instruction;
 }
