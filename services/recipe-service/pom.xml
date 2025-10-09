@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>recipe-service</artifactId>
+    <!--TODO: Update before next jib build-->
     <version>0.0.1</version>
     <name>recipe-service</name>
 
