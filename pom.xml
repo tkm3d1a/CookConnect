@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tkforgeworks</groupId>
+    <groupId>com.tkforgeworks.cookconnect</groupId>
     <artifactId>CookConnect</artifactId>
     <version>0.0.1</version>
     <packaging>pom</packaging>
@@ -93,9 +93,9 @@
                     <version>${project.spring-boot.version}</version>
                     <configuration>
                         <image>
-                            <name>${docker.namespace}/${project.artifactId}:latest</name>
+                            <name>${docker.namespace}/cookconnect-${project.artifactId}:latest</name>
                             <tags>
-                                <tag>${docker.namespace}/${project.artifactId}:${project.version}</tag>
+                                <tag>${docker.namespace}/cookconnect-${project.artifactId}:${project.version}</tag>
                             </tags>
                             <publish>true</publish>
                         </image>
@@ -110,7 +110,7 @@
                             <image>eclipse-temurin:21-jdk-jammy</image>
                         </from>
                         <to>
-                            <image>${docker.repo}/${docker.namespace}/${project.artifactId}</image>
+                            <image>${docker.repo}/${docker.namespace}/cookconnect-${project.artifactId}</image>
                             <tags>
                                 <tag>latest</tag>
                                 <tag>${docker.tag.version}</tag>

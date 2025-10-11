@@ -3,13 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.tkforgeworks</groupId>
+        <groupId>com.tkforgeworks.cookconnect</groupId>
         <artifactId>CookConnect</artifactId>
         <version>0.0.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>recipe-service</artifactId>
+    <!--TODO: Update before next jib build-->
     <version>0.0.1</version>
     <name>recipe-service</name>
 
