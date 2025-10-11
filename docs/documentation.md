@@ -13,3 +13,17 @@
   - Renamed to more applicable "PDD"
     - removed strict performance requirements and other requirement language
     - focus is more on defining overall what is wanted, requirements will be explicitly defined in a different manner
+
+- [Architecture Deviations Analysis](cookconnect_architecture_deviations_v0-0-1.md)
+  - Last updated: 10/11/2025
+  - Analysis of deviations between the planned architecture in PDD and actual implementation
+  - Documents rationale for data model restructuring decisions (list management pattern, ingredient normalization)
+  - Explains enhancements to user profiles and social features
+  - Maintained fidelity to core microservices principles while improving flexibility
+
+- [Data Domain Documentation](cookconnect_data_domain_v0-0-1.md)
+  - Last updated: 10/11/2025
+  - Comprehensive reference for all data models, entities, and relationships across all microservices
+  - Includes entity definitions for User Service, Recipe Service, and Social Service
+  - Documents cross-service integration patterns and data consistency strategy
+  - Updated to reflect new package structure (com.tkforgeworks.cookconnect.*)

@@ -13,7 +13,7 @@ If using Idea IDE, be wary of indent levels in auto generated pom files.  Can le
 
 ```xml
 <parent>
-    <groupId>com.tkforgeworks</groupId>
+    <groupId>com.tkforgeworks.cookconnect</groupId>
     <artifactId>CookConnect</artifactId>
     <version>0.0.1</version>
     <relativePath>../../pom.xml</relativePath>
