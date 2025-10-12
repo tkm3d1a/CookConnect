@@ -19,3 +19,7 @@
 ### Env ###
 **/.env**
 **/target/
+
+### GitHub Actions ###
+.github/workflows/*.log
+.github/workflows/.runner/

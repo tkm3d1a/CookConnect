@@ -2,12 +2,18 @@ package com.tkforgeworks.cookconnect.userservice.model;
 
 import com.tkforgeworks.cookconnect.userservice.model.enums.SkillLevel;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CCUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
