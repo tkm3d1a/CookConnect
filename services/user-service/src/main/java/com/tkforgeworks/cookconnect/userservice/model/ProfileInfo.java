@@ -3,6 +3,10 @@ package com.tkforgeworks.cookconnect.userservice.model;
 import com.tkforgeworks.cookconnect.userservice.model.enums.Gender;
 import com.tkforgeworks.cookconnect.userservice.model.enums.Pronouns;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,6 +16,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProfileInfo {
     @Id
     private Long id;
