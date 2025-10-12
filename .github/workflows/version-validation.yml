@@ -371,19 +371,6 @@ jobs:
     if: always()
 
     steps:
-      - name: Check validation results
-        run: |
-          if [ "${{ needs.validate-service-versions.result }}" == "failure" ]; then
-            echo "❌ Service version validation failed"
-            exit 1
-          elif [ "${{ needs.detect-changes.outputs.has_changes }}" == "false" ]; then
-            echo "ℹ️  No service changes detected - validation skipped"
-          else
-            echo "✅ All service version validations passed"
-          fi
-
-          echo "📝 Parent version auto-incremented to: ${{ needs.auto-increment-parent.outputs.new_version }}"
-
       - name: Comment on PR
         uses: actions/github-script@v7
         if: needs.detect-changes.outputs.has_changes == 'true'
@@ -406,7 +393,7 @@ jobs:
               if (validationResult === 'success') {
                 comment += '✅ All service versions validated successfully!\n';
               } else if (validationResult === 'failure') {
-                comment += '❌ Service version validation failed. Please check the logs above for details.\n\n';
+                comment += '❌ Service version validation failed. Please check the workflow logs for details.\n\n';
                 comment += '**Common issues:**\n';
                 comment += '- Version not incremented in changed service\n';
                 comment += '- Invalid semantic versioning format (must be X.Y.Z)\n';
@@ -424,3 +411,16 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+
+      - name: Check validation results
+        run: |
+          echo "📝 Parent version auto-incremented to: ${{ needs.auto-increment-parent.outputs.new_version }}"
+
+          if [ "${{ needs.validate-service-versions.result }}" == "failure" ]; then
+            echo "❌ Service version validation failed"
+            exit 1
+          elif [ "${{ needs.detect-changes.outputs.has_changes }}" == "false" ]; then
+            echo "ℹ️  No service changes detected - validation skipped"
+          else
+            echo "✅ All service version validations passed"
+          fi
