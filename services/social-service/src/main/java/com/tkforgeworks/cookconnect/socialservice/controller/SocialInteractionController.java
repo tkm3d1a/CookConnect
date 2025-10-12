@@ -10,4 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SocialInteractionController {
     private final SocialInteractionService socialInteractionService;
+
+    //GET
+    //POST
+    //PUT
+    //DELETE
 }
