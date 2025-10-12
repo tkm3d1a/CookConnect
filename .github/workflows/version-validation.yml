@@ -1,0 +1,487 @@
+name: Version Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-increment-parent:
+    name: Auto-increment Parent Version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.increment.outputs.new_version }}
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get main branch parent version
+        id: main_version
+        run: |
+          git fetch origin main
+          MAIN_VERSION=$(git show origin/main:pom.xml | grep -m1 '<version>' | head -1 | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
+          echo "main_version=$MAIN_VERSION" >> $GITHUB_OUTPUT
+          echo "Main branch parent version: $MAIN_VERSION"
+
+      - name: Get current PR parent version
+        id: pr_version
+        run: |
+          PR_VERSION=$(grep -m1 '<version>' pom.xml | head -1 | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
+          echo "pr_version=$PR_VERSION" >> $GITHUB_OUTPUT
+          echo "PR branch parent version: $PR_VERSION"
+
+      - name: Increment patch version
+        id: increment
+        run: |
+          MAIN_VER="${{ steps.main_version.outputs.main_version }}"
+          PR_VER="${{ steps.pr_version.outputs.pr_version }}"
+
+          # Parse main version
+          IFS='.' read -r major minor patch <<< "$MAIN_VER"
+
+          # Calculate new version
+          NEW_VERSION="$major.$minor.$((patch + 1))"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Calculated new version: $NEW_VERSION"
+
+          # Check if PR version already matches or exceeds required version
+          if [ "$PR_VER" == "$NEW_VERSION" ] || [ "$PR_VER" \> "$NEW_VERSION" ]; then
+            echo "skip_update=true" >> $GITHUB_OUTPUT
+            echo "✅ Parent version already updated to $PR_VER"
+          else
+            echo "skip_update=false" >> $GITHUB_OUTPUT
+            echo "📝 Will update parent version from $PR_VER to $NEW_VERSION"
+          fi
+
+      - name: Update parent POM
+        if: steps.increment.outputs.skip_update == 'false'
+        run: |
+          NEW_VER="${{ steps.increment.outputs.new_version }}"
+
+          # Update the first <version> tag in pom.xml (parent version)
+          sed -i "0,/<version>.*<\/version>/s/<version>.*<\/version>/<version>$NEW_VER<\/version>/" pom.xml
+
+          echo "✅ Updated parent pom.xml to version $NEW_VER"
+
+      - name: Update service POM parent references
+        if: steps.increment.outputs.skip_update == 'false'
+        run: |
+          NEW_VER="${{ steps.increment.outputs.new_version }}"
+
+          # Update parent version reference in all service POMs
+          for service_pom in services/*/pom.xml; do
+            if [ -f "$service_pom" ]; then
+              # Use awk to update only the version within the parent block
+              awk -v new_ver="$NEW_VER" '
+                /<parent>/ { in_parent=1 }
+                /<\/parent>/ { in_parent=0; print; next }
+                in_parent && /<version>/ {
+                  sub(/<version>.*<\/version>/, "<version>" new_ver "</version>")
+                }
+                { print }
+              ' "$service_pom" > "${service_pom}.tmp"
+              mv "${service_pom}.tmp" "$service_pom"
+              echo "  ✅ Updated $(basename $(dirname $service_pom))"
+            fi
+          done
+
+          echo "✅ Updated all service POM parent references to $NEW_VER"
+
+      - name: Commit and push parent version
+        if: steps.increment.outputs.skip_update == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml services/*/pom.xml
+          git commit -m "chore: Auto-increment parent version to ${{ steps.increment.outputs.new_version }} [skip ci]"
+          git push origin ${{ github.head_ref }}
+
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    needs: auto-increment-parent
+    outputs:
+      changed_services: ${{ steps.build_matrix.outputs.changed_services }}
+      has_changes: ${{ steps.build_matrix.outputs.has_changes }}
+      service_file_changes: ${{ steps.build_matrix.outputs.service_file_changes }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Pull latest changes from auto-increment
+        run: |
+          git pull origin ${{ github.head_ref }}
+
+      - name: Detect changed files
+        uses: tj-actions/changed-files@v41
+        id: changes
+        with:
+          files_yaml: |
+            user_service:
+              - 'services/user-service/src/**'
+              - 'services/user-service/pom.xml'
+            recipe_service:
+              - 'services/recipe-service/src/**'
+              - 'services/recipe-service/pom.xml'
+            social_service:
+              - 'services/social-service/src/**'
+              - 'services/social-service/pom.xml'
+            config_server:
+              - 'services/config-server/src/**'
+              - 'services/config-server/pom.xml'
+
+      - name: Build changed services matrix
+        id: build_matrix
+        run: |
+          SERVICES=()
+          declare -A SERVICE_REASONS
+          declare -A SERVICE_FILES
+
+          # Function to check if service has non-parent changes and report what changed
+          check_service_changes() {
+            SERVICE=$1
+
+            # Check for src changes
+            SRC_CHANGED=$(git diff --name-only origin/main...HEAD -- "services/$SERVICE/src" 2>/dev/null || true)
+
+            # Check for POM changes outside parent block
+            POM_CHANGED=false
+            if git diff origin/main...HEAD -- "services/$SERVICE/pom.xml" | grep -q .; then
+              # POM has changes, check if they're only in parent block
+              # Get the actual POM content and check for changes outside <parent>...</parent>
+              MAIN_POM=$(git show origin/main:services/$SERVICE/pom.xml)
+              PR_POM=$(cat services/$SERVICE/pom.xml)
+
+              # Extract everything OUTSIDE parent block from both versions
+              MAIN_NO_PARENT=$(echo "$MAIN_POM" | awk '/<parent>/,/<\/parent>/{next} {print}')
+              PR_NO_PARENT=$(echo "$PR_POM" | awk '/<parent>/,/<\/parent>/{next} {print}')
+
+              # If content outside parent differs, it's a real change
+              if [ "$MAIN_NO_PARENT" != "$PR_NO_PARENT" ]; then
+                POM_CHANGED=true
+              fi
+            fi
+
+            # Build file list with just basenames
+            FILES=()
+            if [ -n "$SRC_CHANGED" ]; then
+              while IFS= read -r file; do
+                FILES+=("$(basename "$file")")
+              done <<< "$SRC_CHANGED"
+            fi
+            if [ "$POM_CHANGED" = true ]; then
+              FILES+=("pom.xml")
+            fi
+
+            # Build reason string
+            REASONS=()
+            if [ -n "$SRC_CHANGED" ]; then
+              FILE_COUNT=$(echo "$SRC_CHANGED" | wc -l)
+              REASONS+=("$FILE_COUNT source file(s)")
+            fi
+            if [ "$POM_CHANGED" = true ]; then
+              REASONS+=("pom.xml")
+            fi
+
+            # Return 0 if changes found, 1 if not
+            if [ ${#FILES[@]} -gt 0 ]; then
+              SERVICE_REASONS[$SERVICE]=$(IFS=", "; echo "${REASONS[*]}")
+              SERVICE_FILES[$SERVICE]=$(IFS=","; echo "${FILES[*]}")
+              return 0
+            else
+              return 1
+            fi
+          }
+
+          if [ "${{ steps.changes.outputs.user_service_any_changed }}" == "true" ]; then
+            if check_service_changes "user-service"; then
+              SERVICES+=("user-service")
+              echo "📦 Detected changes in user-service: ${SERVICE_REASONS[user-service]}"
+            else
+              echo "ℹ️  user-service: Only parent version changed, skipping validation"
+            fi
+          fi
+
+          if [ "${{ steps.changes.outputs.recipe_service_any_changed }}" == "true" ]; then
+            if check_service_changes "recipe-service"; then
+              SERVICES+=("recipe-service")
+              echo "📦 Detected changes in recipe-service: ${SERVICE_REASONS[recipe-service]}"
+            else
+              echo "ℹ️  recipe-service: Only parent version changed, skipping validation"
+            fi
+          fi
+
+          if [ "${{ steps.changes.outputs.social_service_any_changed }}" == "true" ]; then
+            if check_service_changes "social-service"; then
+              SERVICES+=("social-service")
+              echo "📦 Detected changes in social-service: ${SERVICE_REASONS[social-service]}"
+            else
+              echo "ℹ️  social-service: Only parent version changed, skipping validation"
+            fi
+          fi
+
+          if [ "${{ steps.changes.outputs.config_server_any_changed }}" == "true" ]; then
+            if check_service_changes "config-server"; then
+              SERVICES+=("config-server")
+              echo "📦 Detected changes in config-server: ${SERVICE_REASONS[config-server]}"
+            else
+              echo "ℹ️  config-server: Only parent version changed, skipping validation"
+            fi
+          fi
+
+          if [ ${#SERVICES[@]} -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "changed_services=[]" >> $GITHUB_OUTPUT
+            echo "service_file_changes={}" >> $GITHUB_OUTPUT
+            echo "ℹ️  No service changes detected (or only parent version updates)"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+
+            # Convert services array to JSON
+            JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s -c .)
+            echo "changed_services=$JSON_ARRAY" >> $GITHUB_OUTPUT
+
+            # Build JSON object with file changes per service
+            FILE_CHANGES_JSON="{"
+            FIRST=true
+            for svc in "${SERVICES[@]}"; do
+              if [ "$FIRST" = false ]; then
+                FILE_CHANGES_JSON+=","
+              fi
+              FIRST=false
+
+              # Split comma-separated files into JSON array
+              FILES_ARRAY=$(echo "${SERVICE_FILES[$svc]}" | tr ',' '\n' | jq -R . | jq -s -c .)
+              FILE_CHANGES_JSON+="\"$svc\":$FILES_ARRAY"
+            done
+            FILE_CHANGES_JSON+="}"
+            echo "service_file_changes=$FILE_CHANGES_JSON" >> $GITHUB_OUTPUT
+
+            # Output detailed summary
+            echo "✅ Changed services requiring validation:"
+            for svc in "${SERVICES[@]}"; do
+              echo "  - $svc: ${SERVICE_REASONS[$svc]}"
+              # List individual files
+              IFS=',' read -ra FILES <<< "${SERVICE_FILES[$svc]}"
+              for file in "${FILES[@]}"; do
+                echo "    • $file"
+              done
+            done
+          fi
+
+  validate-service-versions:
+    name: Validate Service Versions
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.changed_services) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Pull latest changes from auto-increment
+        run: |
+          git pull origin ${{ github.head_ref }}
+
+      - name: Get service versions
+        id: versions
+        run: |
+          SERVICE="${{ matrix.service }}"
+
+          # Get version from main branch (skip parent block, get service version)
+          git fetch origin main
+          MAIN_VER=$(git show origin/main:services/$SERVICE/pom.xml | sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' | tr -d '[:space:]')
+
+          # Get version from PR branch (skip parent block, get service version)
+          PR_VER=$(sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' services/$SERVICE/pom.xml | tr -d '[:space:]')
+
+          echo "main_version=$MAIN_VER" >> $GITHUB_OUTPUT
+          echo "pr_version=$PR_VER" >> $GITHUB_OUTPUT
+
+          echo "📊 $SERVICE versions:"
+          echo "   Main: $MAIN_VER"
+          echo "   PR:   $PR_VER"
+
+      - name: Validate semantic versioning format
+        id: validate_format
+        run: |
+          PR_VER="${{ steps.versions.outputs.pr_version }}"
+          SERVICE="${{ matrix.service }}"
+
+          # Validate format X.Y.Z
+          if [[ ! "$PR_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ [$SERVICE] Invalid version format: $PR_VER"
+            echo "   Expected format: X.Y.Z (e.g., 0.1.0, 1.2.3)"
+            exit 1
+          fi
+
+          echo "✅ [$SERVICE] Version format valid: $PR_VER"
+
+      - name: Validate version increment
+        run: |
+          MAIN_VER="${{ steps.versions.outputs.main_version }}"
+          PR_VER="${{ steps.versions.outputs.pr_version }}"
+          SERVICE="${{ matrix.service }}"
+
+          # Parse versions
+          IFS='.' read -r main_x main_y main_z <<< "$MAIN_VER"
+          IFS='.' read -r pr_x pr_y pr_z <<< "$PR_VER"
+
+          echo "Validating increment for $SERVICE:"
+          echo "  Main: $main_x.$main_y.$main_z"
+          echo "  PR:   $pr_x.$pr_y.$pr_z"
+
+          # Check if version increased
+          if [ "$PR_VER" == "$MAIN_VER" ]; then
+            echo "❌ [$SERVICE] Version unchanged: $MAIN_VER"
+            echo "   Please increment the version in services/$SERVICE/pom.xml"
+            exit 1
+          fi
+
+          # Validate increment rules
+          if [ $pr_x -gt $main_x ]; then
+            # Major version increment
+            echo "🔍 Checking major version increment..."
+            if [ $((pr_x - main_x)) -ne 1 ]; then
+              echo "❌ [$SERVICE] Major version must increment by exactly 1"
+              echo "   Got: $main_x → $pr_x (difference: $((pr_x - main_x)))"
+              exit 1
+            fi
+            if [ $pr_y -ne 0 ] || [ $pr_z -ne 0 ]; then
+              echo "❌ [$SERVICE] Major version increment must reset minor and patch to 0"
+              echo "   Expected: $pr_x.0.0"
+              echo "   Got:      $pr_x.$pr_y.$pr_z"
+              exit 1
+            fi
+            echo "✅ [$SERVICE] Valid major version increment: $MAIN_VER → $PR_VER"
+
+          elif [ $pr_y -gt $main_y ]; then
+            # Minor version increment
+            echo "🔍 Checking minor version increment..."
+            if [ $pr_x -ne $main_x ]; then
+              echo "❌ [$SERVICE] Major version should not change with minor increment"
+              exit 1
+            fi
+            if [ $((pr_y - main_y)) -ne 1 ]; then
+              echo "❌ [$SERVICE] Minor version must increment by exactly 1"
+              echo "   Got: $main_y → $pr_y (difference: $((pr_y - main_y)))"
+              exit 1
+            fi
+            if [ $pr_z -ne 0 ]; then
+              echo "❌ [$SERVICE] Minor version increment must reset patch to 0"
+              echo "   Expected: $pr_x.$pr_y.0"
+              echo "   Got:      $pr_x.$pr_y.$pr_z"
+              exit 1
+            fi
+            echo "✅ [$SERVICE] Valid minor version increment: $MAIN_VER → $PR_VER"
+
+          elif [ $pr_z -gt $main_z ]; then
+            # Patch version increment
+            echo "🔍 Checking patch version increment..."
+            if [ $pr_x -ne $main_x ] || [ $pr_y -ne $main_y ]; then
+              echo "❌ [$SERVICE] Major/minor versions should not change with patch increment"
+              exit 1
+            fi
+            if [ $((pr_z - main_z)) -ne 1 ]; then
+              echo "❌ [$SERVICE] Patch version must increment by exactly 1"
+              echo "   Got: $main_z → $pr_z (difference: $((pr_z - main_z)))"
+              exit 1
+            fi
+            echo "✅ [$SERVICE] Valid patch version increment: $MAIN_VER → $PR_VER"
+
+          else
+            echo "❌ [$SERVICE] Version must be incremented"
+            echo "   Main: $MAIN_VER"
+            echo "   PR:   $PR_VER"
+            echo "   Increment one of: major (X), minor (Y), or patch (Z)"
+            exit 1
+          fi
+
+  report-status:
+    name: Report Validation Status
+    runs-on: ubuntu-latest
+    needs: [auto-increment-parent, detect-changes, validate-service-versions]
+    if: always()
+
+    steps:
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        if: needs.detect-changes.outputs.has_changes == 'true'
+        with:
+          script: |
+            const changedServices = ${{ needs.detect-changes.outputs.changed_services }};
+            const serviceFileChanges = ${{ needs.detect-changes.outputs.service_file_changes }};
+            const parentVersion = '${{ needs.auto-increment-parent.outputs.new_version }}';
+            const validationResult = '${{ needs.validate-service-versions.result }}';
+
+            let comment = '## 🔍 Version Validation Results\n\n';
+            comment += `**Parent POM Version:** Auto-incremented to \`${parentVersion}\` ✅\n\n`;
+
+            if (changedServices.length > 0) {
+              comment += '**Changed Services:**\n';
+              changedServices.forEach(service => {
+                comment += `- \`${service}\`\n`;
+
+                // Add file list if available
+                if (serviceFileChanges[service]) {
+                  serviceFileChanges[service].forEach(file => {
+                    comment += `  - ${file}\n`;
+                  });
+                }
+              });
+              comment += '\n';
+
+              if (validationResult === 'success') {
+                comment += '✅ All service versions validated successfully!\n';
+              } else if (validationResult === 'failure') {
+                comment += '❌ Service version validation failed. Please check the workflow logs for details.\n\n';
+                comment += '**Common issues:**\n';
+                comment += '- Version not incremented in changed service\n';
+                comment += '- Invalid semantic versioning format (must be X.Y.Z)\n';
+                comment += '- Increment must be exactly +1 for one component\n';
+                comment += '- Minor increment must reset patch to 0\n';
+                comment += '- Major increment must reset minor and patch to 0\n';
+              }
+            } else {
+              comment += 'ℹ️ No service changes detected.\n';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Check validation results
+        run: |
+          echo "📝 Parent version auto-incremented to: ${{ needs.auto-increment-parent.outputs.new_version }}"
+
+          if [ "${{ needs.validate-service-versions.result }}" == "failure" ]; then
+            echo "❌ Service version validation failed"
+            exit 1
+          elif [ "${{ needs.detect-changes.outputs.has_changes }}" == "false" ]; then
+            echo "ℹ️  No service changes detected - validation skipped"
+          else
+            echo "✅ All service version validations passed"
+          fi

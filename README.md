@@ -22,6 +22,7 @@
 - [Project Structure](#project-structure)
 - [Documentation](#documentation)
 - [Development](#development)
+- [Versioning Strategy](#versioning-strategy)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -747,6 +748,169 @@ docker compose -f database-compose.yml up -d
 - Clean and rebuild: `mvn clean install`
 - Check Java version: `java -version` (should be 21)
 - Verify Maven version: `mvn -version` (should be 3.6+)
+
+## Versioning Strategy
+
+CookConnect follows strict **Semantic Versioning (SemVer)** with automated validation through GitHub Actions to ensure version consistency and traceability.
+
+### Semantic Versioning Format
+
+All versions follow the `X.Y.Z` format:
+- **X** (Major): Breaking changes, significant API changes
+- **Y** (Minor): New features, backwards-compatible additions
+- **Z** (Patch): Bug fixes, minor improvements, backwards-compatible
+
+### Version Management Rules
+
+#### Parent POM Versioning
+The parent POM version (`pom.xml` in the root directory) is **automatically incremented** on every pull request to `main`:
+- GitHub Actions workflow increments the patch version (+1)
+- No manual intervention required
+- Commits with `[skip ci]` to prevent infinite loops
+
+**Example**: `0.0.1` → `0.0.2` on every PR merge
+
+#### Service POM Versioning
+Individual service versions (`services/{service-name}/pom.xml`) are **manually managed**:
+- **Must be incremented** when that service has code or POM changes
+- Version must increase compared to the `main` branch
+- Only **+1 increments** are allowed per component
+
+### Increment Rules
+
+#### Patch Version (Z)
+```
+0.0.1 → 0.0.2  ✅ Valid
+0.0.1 → 0.0.3  ❌ Invalid (must increment by exactly 1)
+```
+
+**When to use**: Bug fixes, minor code improvements, dependency updates
+
+#### Minor Version (Y)
+```
+0.0.5 → 0.1.0  ✅ Valid (resets patch to 0)
+0.0.5 → 0.1.1  ❌ Invalid (patch must be 0)
+0.0.5 → 0.2.0  ❌ Invalid (can only increment by 1)
+```
+
+**When to use**: New features, new API endpoints, backwards-compatible additions
+
+#### Major Version (X)
+```
+0.5.3 → 1.0.0  ✅ Valid (resets minor and patch to 0)
+0.5.3 → 1.0.1  ❌ Invalid (minor and patch must be 0)
+0.5.3 → 1.1.0  ❌ Invalid (minor and patch must be 0)
+0.5.3 → 2.0.0  ❌ Invalid (can only increment by 1)
+```
+
+**When to use**: Breaking changes, API redesign, incompatible updates
+
+### Automated Version Validation
+
+Every pull request to `main` triggers the **Version Validation** GitHub Actions workflow:
+
+#### Workflow Steps
+1. **Auto-Increment Parent POM**
+   - Fetches current parent version from `main` branch
+   - Increments patch version by 1
+   - Updates `pom.xml` and commits back to PR branch
+   - Skips if PR already has correct or higher version
+
+2. **Detect Changed Services**
+   - Scans PR for changes in service directories
+   - Monitors: `services/{service-name}/src/**` and `services/{service-name}/pom.xml`
+   - Builds matrix of services requiring validation
+
+3. **Validate Service Versions**
+   - For each changed service, validates:
+     - Version format is `X.Y.Z`
+     - Version increased compared to `main` branch
+     - Increment is exactly +1 on one component
+     - Reset rules applied correctly (Y↑→Z=0, X↑→Y=Z=0)
+
+4. **Report Status**
+   - Posts PR comment with validation results
+   - Fails PR if validation errors found
+   - Provides clear error messages with fix suggestions
+
+### Example Validation Output
+
+**Successful Validation:**
+```
+🔍 Version Validation Results
+
+Parent POM Version: Auto-incremented to `0.0.5` ✅
+
+Changed Services:
+- `user-service`
+
+✅ All service versions validated successfully!
+```
+
+**Failed Validation:**
+```
+🔍 Version Validation Results
+
+Parent POM Version: Auto-incremented to `0.0.5` ✅
+
+Changed Services:
+- `user-service`
+
+❌ Service version validation failed. Please check the logs above for details.
+
+Common issues:
+- Version not incremented in changed service
+- Invalid semantic versioning format (must be X.Y.Z)
+- Increment must be exactly +1 for one component
+- Minor increment must reset patch to 0
+- Major increment must reset minor and patch to 0
+```
+
+### Manual Validation Script
+
+A standalone validation script is available for local testing:
+
+```bash
+# Usage
+.github/scripts/validate-semver.sh <main_version> <pr_version> <service_name>
+
+# Example
+.github/scripts/validate-semver.sh 0.0.1 0.0.2 user-service
+```
+
+This script can be used before committing to verify your version increment is valid.
+
+### Developer Workflow
+
+When making changes to a service:
+
+1. **Make your code changes** in the service directory
+2. **Update the service version** in `services/{service-name}/pom.xml`:
+   ```xml
+   <version>0.0.2</version>  <!-- Increment appropriately -->
+   ```
+3. **Commit and push** your changes
+4. **Create a pull request** to `main`
+5. **GitHub Actions will**:
+   - Auto-increment the parent POM version
+   - Validate your service version increment
+   - Report results in PR comment
+6. **Fix any validation errors** if needed
+7. **Merge** once validation passes
+
+### Workflow Files
+
+The version validation system consists of:
+- `.github/workflows/version-validation.yml` - Main GitHub Actions workflow
+- `.github/scripts/validate-semver.sh` - Reusable validation script
+
+### Disabling Validation (Not Recommended)
+
+To skip validation for a specific PR (emergency fixes only):
+- Add `[skip ci]` to your commit message
+- This will skip the workflow entirely
+
+**Warning**: Skipping validation can lead to version inconsistencies and should only be used in exceptional circumstances.
 
 ## Roadmap
 
