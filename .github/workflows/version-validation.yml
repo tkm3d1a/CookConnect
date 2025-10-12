@@ -112,6 +112,7 @@ jobs:
     outputs:
       changed_services: ${{ steps.build_matrix.outputs.changed_services }}
       has_changes: ${{ steps.build_matrix.outputs.has_changes }}
+      service_file_changes: ${{ steps.build_matrix.outputs.service_file_changes }}
 
     steps:
       - name: Checkout code
@@ -147,6 +148,7 @@ jobs:
         run: |
           SERVICES=()
           declare -A SERVICE_REASONS
+          declare -A SERVICE_FILES
 
           # Function to check if service has non-parent changes and report what changed
           check_service_changes() {
@@ -173,19 +175,31 @@ jobs:
               fi
             fi
 
+            # Build file list with just basenames
+            FILES=()
+            if [ -n "$SRC_CHANGED" ]; then
+              while IFS= read -r file; do
+                FILES+=("$(basename "$file")")
+              done <<< "$SRC_CHANGED"
+            fi
+            if [ "$POM_CHANGED" = true ]; then
+              FILES+=("pom.xml")
+            fi
+
             # Build reason string
             REASONS=()
             if [ -n "$SRC_CHANGED" ]; then
               FILE_COUNT=$(echo "$SRC_CHANGED" | wc -l)
-              REASONS+=("$FILE_COUNT source file(s) changed")
+              REASONS+=("$FILE_COUNT source file(s)")
             fi
             if [ "$POM_CHANGED" = true ]; then
-              REASONS+=("POM changes outside <parent> block")
+              REASONS+=("pom.xml")
             fi
 
             # Return 0 if changes found, 1 if not
-            if [ ${#REASONS[@]} -gt 0 ]; then
+            if [ ${#FILES[@]} -gt 0 ]; then
               SERVICE_REASONS[$SERVICE]=$(IFS=", "; echo "${REASONS[*]}")
+              SERVICE_FILES[$SERVICE]=$(IFS=","; echo "${FILES[*]}")
               return 0
             else
               return 1
@@ -231,17 +245,40 @@ jobs:
           if [ ${#SERVICES[@]} -eq 0 ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "changed_services=[]" >> $GITHUB_OUTPUT
+            echo "service_file_changes={}" >> $GITHUB_OUTPUT
             echo "ℹ️  No service changes detected (or only parent version updates)"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            # Convert bash array to JSON array with reasons
+
+            # Convert services array to JSON
             JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s -c .)
             echo "changed_services=$JSON_ARRAY" >> $GITHUB_OUTPUT
+
+            # Build JSON object with file changes per service
+            FILE_CHANGES_JSON="{"
+            FIRST=true
+            for svc in "${SERVICES[@]}"; do
+              if [ "$FIRST" = false ]; then
+                FILE_CHANGES_JSON+=","
+              fi
+              FIRST=false
+
+              # Split comma-separated files into JSON array
+              FILES_ARRAY=$(echo "${SERVICE_FILES[$svc]}" | tr ',' '\n' | jq -R . | jq -s -c .)
+              FILE_CHANGES_JSON+="\"$svc\":$FILES_ARRAY"
+            done
+            FILE_CHANGES_JSON+="}"
+            echo "service_file_changes=$FILE_CHANGES_JSON" >> $GITHUB_OUTPUT
 
             # Output detailed summary
             echo "✅ Changed services requiring validation:"
             for svc in "${SERVICES[@]}"; do
               echo "  - $svc: ${SERVICE_REASONS[$svc]}"
+              # List individual files
+              IFS=',' read -ra FILES <<< "${SERVICE_FILES[$svc]}"
+              for file in "${FILES[@]}"; do
+                echo "    • $file"
+              done
             done
           fi
 
@@ -393,6 +430,7 @@ jobs:
         with:
           script: |
             const changedServices = ${{ needs.detect-changes.outputs.changed_services }};
+            const serviceFileChanges = ${{ needs.detect-changes.outputs.service_file_changes }};
             const parentVersion = '${{ needs.auto-increment-parent.outputs.new_version }}';
             const validationResult = '${{ needs.validate-service-versions.result }}';
 
@@ -403,6 +441,13 @@ jobs:
               comment += '**Changed Services:**\n';
               changedServices.forEach(service => {
                 comment += `- \`${service}\`\n`;
+
+                // Add file list if available
+                if (serviceFileChanges[service]) {
+                  serviceFileChanges[service].forEach(file => {
+                    comment += `  - ${file}\n`;
+                  });
+                }
               });
               comment += '\n';
 
