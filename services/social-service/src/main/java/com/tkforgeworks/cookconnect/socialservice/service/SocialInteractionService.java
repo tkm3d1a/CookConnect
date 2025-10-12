@@ -8,5 +8,5 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SocialInteractionService {
     private final SocialInteractionRepository socialInteractionRepository;
-    private final CookBookService cookBookService;
+    private final CookbookService cookBookService;
 }

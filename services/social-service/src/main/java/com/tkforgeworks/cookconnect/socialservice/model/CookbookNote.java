@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ToString
-public class CookBookNote {
+public class CookbookNote {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
