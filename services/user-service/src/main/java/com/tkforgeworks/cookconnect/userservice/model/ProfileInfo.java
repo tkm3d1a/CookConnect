@@ -43,7 +43,7 @@ public class ProfileInfo {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.EAGER,
-            mappedBy = "id"
+            mappedBy = "profileInfo"
     )
     private Set<Address> addresses = new HashSet<>();
 

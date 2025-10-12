@@ -24,8 +24,8 @@ public class CCUser {
     private String password;
     private String email;
     private boolean hasSocialInteraction;
-    private boolean isPrivate;
-    private boolean isClosed;
+    private boolean privateAccount;
+    private boolean closedAccount;
     @CreationTimestamp
     private LocalDateTime createdAt;
     @UpdateTimestamp

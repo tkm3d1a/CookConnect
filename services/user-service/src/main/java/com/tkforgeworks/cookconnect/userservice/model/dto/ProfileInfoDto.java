@@ -8,10 +8,14 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Set;
 
-/**
- * DTO for {@link com.tkforgeworks.cookconnect.userservice.model.ProfileInfo}
- */
-public record ProfileInfoDto(Long id, String firstName, String lastName, Date birthDate, int age, Gender gender,
-                             Pronouns pronouns, Set<AddressDto> addresses, LocalDateTime createdAt,
-                             LocalDateTime updatedAt) implements Serializable {
-}
+public record ProfileInfoDto(Long id,
+                             String firstName,
+                             String lastName,
+                             Date birthDate,
+                             int age,
+                             Gender gender,
+                             Pronouns pronouns,
+                             Set<AddressDto> addresses,
+                             LocalDateTime createdAt,
+                             LocalDateTime updatedAt)
+        implements Serializable {}

@@ -1,6 +1,7 @@
 package com.tkforgeworks.cookconnect.userservice.controller;
 
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
+import com.tkforgeworks.cookconnect.userservice.model.dto.UpdateCCUserDTO;
 import com.tkforgeworks.cookconnect.userservice.service.CCUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,17 @@ public class CCUserController {
         CCUserDto createdUser = ccUserService.createUser(ccUserDto);
         URI location = URI.create("/cc-user/" + createdUser.id());
         return ResponseEntity.created(location).body(createdUser);
+    }
+
+    @PutMapping("/{ccUserId}")
+    public ResponseEntity<CCUserDto> updateCCUser(@PathVariable("ccUserId") Long ccUserId,
+                                                  @RequestBody UpdateCCUserDTO updateCCUserDTO) {
+        return ResponseEntity.ok(ccUserService.updateUser(ccUserId, updateCCUserDTO));
+    }
+
+    @DeleteMapping("/{ccUserId}")
+    public ResponseEntity<String> deleteCCUser(@PathVariable("ccUserId") Long ccUserId) {
+        return ResponseEntity.ok(ccUserService.deleteUserById(ccUserId));
     }
 
 }

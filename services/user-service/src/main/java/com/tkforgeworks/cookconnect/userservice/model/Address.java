@@ -18,6 +18,7 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_info_user_id")
     private ProfileInfo profileInfo;
 
     private String street;
