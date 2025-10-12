@@ -117,7 +117,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+
+      - name: Pull latest changes from auto-increment
+        run: |
+          git pull origin ${{ github.head_ref }}
 
       - name: Detect changed files
         uses: tj-actions/changed-files@v41
@@ -238,7 +243,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+
+      - name: Pull latest changes from auto-increment
+        run: |
+          git pull origin ${{ github.head_ref }}
 
       - name: Get service versions
         id: versions
