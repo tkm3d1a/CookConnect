@@ -146,74 +146,85 @@ jobs:
         id: build_matrix
         run: |
           SERVICES=()
+          declare -A SERVICE_REASONS
 
-          # Function to check if POM changes are only in parent block
-          is_parent_only_change() {
+          # Function to check if service has non-parent changes and report what changed
+          check_service_changes() {
             SERVICE=$1
-            # Get diff for the pom.xml file
-            git diff origin/main...HEAD -- services/$SERVICE/pom.xml > /tmp/pom_diff.txt
 
-            # If no diff exists, not a change
-            if [ ! -s /tmp/pom_diff.txt ]; then
-              return 1  # Not parent-only (no change at all)
+            # Check for src changes
+            SRC_CHANGED=$(git diff --name-only origin/main...HEAD -- "services/$SERVICE/src" 2>/dev/null || true)
+
+            # Check for POM changes outside parent block
+            POM_CHANGED=false
+            if git diff origin/main...HEAD -- "services/$SERVICE/pom.xml" | grep -q .; then
+              # POM has changes, check if they're only in parent block
+              # Get the actual POM content and check for changes outside <parent>...</parent>
+              MAIN_POM=$(git show origin/main:services/$SERVICE/pom.xml)
+              PR_POM=$(cat services/$SERVICE/pom.xml)
+
+              # Extract everything OUTSIDE parent block from both versions
+              MAIN_NO_PARENT=$(echo "$MAIN_POM" | awk '/<parent>/,/<\/parent>/{next} {print}')
+              PR_NO_PARENT=$(echo "$PR_POM" | awk '/<parent>/,/<\/parent>/{next} {print}')
+
+              # If content outside parent differs, it's a real change
+              if [ "$MAIN_NO_PARENT" != "$PR_NO_PARENT" ]; then
+                POM_CHANGED=true
+              fi
             fi
 
-            # Extract only the changed lines (+ and - lines)
-            CHANGES=$(grep -E '^\+|^-' /tmp/pom_diff.txt | grep -v '^\+\+\+\|^---')
+            # Build reason string
+            REASONS=()
+            if [ -n "$SRC_CHANGED" ]; then
+              FILE_COUNT=$(echo "$SRC_CHANGED" | wc -l)
+              REASONS+=("$FILE_COUNT source file(s) changed")
+            fi
+            if [ "$POM_CHANGED" = true ]; then
+              REASONS+=("POM changes outside <parent> block")
+            fi
 
-            # Check if all changes are within <parent> tags
-            # If we find changes outside parent block, return false
-            IN_PARENT=0
-            while IFS= read -r line; do
-              if [[ "$line" =~ "<parent>" ]]; then
-                IN_PARENT=1
-              elif [[ "$line" =~ "</parent>" ]]; then
-                IN_PARENT=0
-              elif [[ "$line" =~ ^[\+\-][[:space:]]*\<version\> ]] && [ $IN_PARENT -eq 0 ]; then
-                # Found version change outside parent block
-                return 1
-              elif [[ "$line" =~ ^[\+\-] ]] && [ $IN_PARENT -eq 0 ] && [[ ! "$line" =~ ^[\+\-][\+\-][\+\-] ]]; then
-                # Found other changes outside parent block (ignore +++ and --- diff markers)
-                return 1
-              fi
-            done <<< "$CHANGES"
-
-            return 0  # All changes are in parent block
+            # Return 0 if changes found, 1 if not
+            if [ ${#REASONS[@]} -gt 0 ]; then
+              SERVICE_REASONS[$SERVICE]=$(IFS=", "; echo "${REASONS[*]}")
+              return 0
+            else
+              return 1
+            fi
           }
 
           if [ "${{ steps.changes.outputs.user_service_any_changed }}" == "true" ]; then
-            if is_parent_only_change "user-service"; then
-              echo "ℹ️  user-service: Only parent version changed, skipping validation"
-            else
+            if check_service_changes "user-service"; then
               SERVICES+=("user-service")
-              echo "📦 Detected changes in: user-service"
+              echo "📦 Detected changes in user-service: ${SERVICE_REASONS[user-service]}"
+            else
+              echo "ℹ️  user-service: Only parent version changed, skipping validation"
             fi
           fi
 
           if [ "${{ steps.changes.outputs.recipe_service_any_changed }}" == "true" ]; then
-            if is_parent_only_change "recipe-service"; then
-              echo "ℹ️  recipe-service: Only parent version changed, skipping validation"
-            else
+            if check_service_changes "recipe-service"; then
               SERVICES+=("recipe-service")
-              echo "📦 Detected changes in: recipe-service"
+              echo "📦 Detected changes in recipe-service: ${SERVICE_REASONS[recipe-service]}"
+            else
+              echo "ℹ️  recipe-service: Only parent version changed, skipping validation"
             fi
           fi
 
           if [ "${{ steps.changes.outputs.social_service_any_changed }}" == "true" ]; then
-            if is_parent_only_change "social-service"; then
-              echo "ℹ️  social-service: Only parent version changed, skipping validation"
-            else
+            if check_service_changes "social-service"; then
               SERVICES+=("social-service")
-              echo "📦 Detected changes in: social-service"
+              echo "📦 Detected changes in social-service: ${SERVICE_REASONS[social-service]}"
+            else
+              echo "ℹ️  social-service: Only parent version changed, skipping validation"
             fi
           fi
 
           if [ "${{ steps.changes.outputs.config_server_any_changed }}" == "true" ]; then
-            if is_parent_only_change "config-server"; then
-              echo "ℹ️  config-server: Only parent version changed, skipping validation"
-            else
+            if check_service_changes "config-server"; then
               SERVICES+=("config-server")
-              echo "📦 Detected changes in: config-server"
+              echo "📦 Detected changes in config-server: ${SERVICE_REASONS[config-server]}"
+            else
+              echo "ℹ️  config-server: Only parent version changed, skipping validation"
             fi
           fi
 
@@ -223,10 +234,15 @@ jobs:
             echo "ℹ️  No service changes detected (or only parent version updates)"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            # Convert bash array to JSON array
+            # Convert bash array to JSON array with reasons
             JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s -c .)
             echo "changed_services=$JSON_ARRAY" >> $GITHUB_OUTPUT
-            echo "✅ Changed services: ${SERVICES[*]}"
+
+            # Output detailed summary
+            echo "✅ Changed services requiring validation:"
+            for svc in "${SERVICES[@]}"; do
+              echo "  - $svc: ${SERVICE_REASONS[$svc]}"
+            done
           fi
 
   validate-service-versions:
