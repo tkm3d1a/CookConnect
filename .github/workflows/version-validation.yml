@@ -72,12 +72,36 @@ jobs:
 
           echo "✅ Updated parent pom.xml to version $NEW_VER"
 
+      - name: Update service POM parent references
+        if: steps.increment.outputs.skip_update == 'false'
+        run: |
+          NEW_VER="${{ steps.increment.outputs.new_version }}"
+
+          # Update parent version reference in all service POMs
+          for service_pom in services/*/pom.xml; do
+            if [ -f "$service_pom" ]; then
+              # Use awk to update only the version within the parent block
+              awk -v new_ver="$NEW_VER" '
+                /<parent>/ { in_parent=1 }
+                /<\/parent>/ { in_parent=0; print; next }
+                in_parent && /<version>/ {
+                  sub(/<version>.*<\/version>/, "<version>" new_ver "</version>")
+                }
+                { print }
+              ' "$service_pom" > "${service_pom}.tmp"
+              mv "${service_pom}.tmp" "$service_pom"
+              echo "  ✅ Updated $(basename $(dirname $service_pom))"
+            fi
+          done
+
+          echo "✅ Updated all service POM parent references to $NEW_VER"
+
       - name: Commit and push parent version
         if: steps.increment.outputs.skip_update == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pom.xml
+          git add pom.xml services/*/pom.xml
           git commit -m "chore: Auto-increment parent version to ${{ steps.increment.outputs.new_version }} [skip ci]"
           git push origin ${{ github.head_ref }}
 
