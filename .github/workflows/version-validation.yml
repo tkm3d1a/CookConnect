@@ -171,12 +171,12 @@ jobs:
         run: |
           SERVICE="${{ matrix.service }}"
 
-          # Get version from main branch
+          # Get version from main branch (skip parent block, get service version)
           git fetch origin main
-          MAIN_VER=$(git show origin/main:services/$SERVICE/pom.xml | grep -m1 '<version>' | head -1 | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
+          MAIN_VER=$(git show origin/main:services/$SERVICE/pom.xml | sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' | tr -d '[:space:]')
 
-          # Get version from PR branch
-          PR_VER=$(grep -m1 '<version>' services/$SERVICE/pom.xml | head -1 | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
+          # Get version from PR branch (skip parent block, get service version)
+          PR_VER=$(sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' services/$SERVICE/pom.xml | tr -d '[:space:]')
 
           echo "main_version=$MAIN_VER" >> $GITHUB_OUTPUT
           echo "pr_version=$PR_VER" >> $GITHUB_OUTPUT
