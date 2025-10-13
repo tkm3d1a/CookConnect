@@ -24,10 +24,15 @@ public class TagList {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             mappedBy = "id")
-    private Set<TagListItem> tagListItems = new HashSet<>();
+    private Set<TagListItem> tags = new HashSet<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void addTag(TagListItem tagListItem){
+        tags.add(tagListItem);
+        tagListItem.setTagList(this);
+    }
 }

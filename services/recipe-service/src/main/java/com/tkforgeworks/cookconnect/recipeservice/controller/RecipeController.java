@@ -1,6 +1,7 @@
 package com.tkforgeworks.cookconnect.recipeservice.controller;
 
-import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateDto;
+import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateDetailedDto;
+import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateSimpleDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeSummaryDto;
 import com.tkforgeworks.cookconnect.recipeservice.service.RecipeService;
@@ -24,8 +25,14 @@ public class RecipeController {
     }
     //POST
     @PostMapping
-    public ResponseEntity<RecipeDto> createRecipe(@RequestBody RecipeCreateDto recipeCreateDto) {
-        RecipeDto createdRecipe = recipeService.createRecipe(recipeCreateDto);
+    public ResponseEntity<RecipeDto> createSimpleRecipe(@RequestBody RecipeCreateSimpleDto recipeCreateSimpleDto) {
+        RecipeDto createdRecipe = recipeService.createSimpleRecipe(recipeCreateSimpleDto);
+        URI location = URI.create(String.format("/recipes/%s", createdRecipe.id()));
+        return ResponseEntity.created(location).body(createdRecipe);
+    }
+    @PostMapping("/detailed")
+    public ResponseEntity<RecipeDto> createDetailedRecipe(@RequestBody RecipeCreateDetailedDto recipeCreateDetailedDto) {
+        RecipeDto createdRecipe = recipeService.createdDetailedRecipe(recipeCreateDetailedDto);
         URI location = URI.create(String.format("/recipes/%s", createdRecipe.id()));
         return ResponseEntity.created(location).body(createdRecipe);
     }

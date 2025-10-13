@@ -6,5 +6,5 @@ import java.io.Serializable;
 
 public record TagDto(String name,
                      String description,
-                     TagCategory tagCategory)
+                     TagCategory category)
         implements Serializable {}

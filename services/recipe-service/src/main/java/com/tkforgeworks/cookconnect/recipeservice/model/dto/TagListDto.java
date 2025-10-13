@@ -1,7 +1,7 @@
 package com.tkforgeworks.cookconnect.recipeservice.model.dto;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Set;
 
-public record TagListDto(List<TagListItemDto> listItem)
+public record TagListDto(Set<TagListItemDto> listItems)
         implements Serializable {}

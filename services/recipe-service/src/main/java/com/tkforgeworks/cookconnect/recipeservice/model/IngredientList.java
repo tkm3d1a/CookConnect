@@ -30,4 +30,10 @@ public class IngredientList {
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void addListItem(IngredientListItem ingredientListItem)
+    {
+        ingredients.add(ingredientListItem);
+        ingredientListItem.setIngredientList(this);
+    }
 }
