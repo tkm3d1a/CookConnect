@@ -5,6 +5,7 @@ import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookEntryDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookNoteDto;
 import com.tkforgeworks.cookconnect.socialservice.model.mapper.SocialInteractionMapper;
+import com.tkforgeworks.cookconnect.socialservice.repository.CookbookNoteRepository;
 import com.tkforgeworks.cookconnect.socialservice.repository.CookbookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,14 +16,14 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class CookbookService {
-    private final CookbookRepository cookBookRepository;
+    private final CookbookRepository cookbookRepository;
+    private final CookbookNoteRepository cookBookNoteRepository;
     private final CookbookEntryService entryService;
-    private final CookbookNoteService noteService;
     private final SocialInteractionMapper mapper;
 
     public List<CookbookDto> getAllCookbooks() {
 //        throw new RuntimeException("not yet implemented");
-        return mapper.toCookbookDtoList(cookBookRepository.findAll());
+        return mapper.toCookbookDtoList(cookbookRepository.findAll());
     }
 
     public CookbookDto getCookbookById(Long cookbookId) {
@@ -43,11 +44,11 @@ public class CookbookService {
 
     public CookbookDto createCookbook(CookbookDto cookbookDto) {
 //        throw new RuntimeException("not yet implemented");
-        if(Objects.nonNull(cookbookDto.id()) && cookBookRepository.existsById(cookbookDto.id())){
+        if(Objects.nonNull(cookbookDto.id()) && cookbookRepository.existsById(cookbookDto.id())){
             throw new RuntimeException("cookbook already exists");
         }
         Cookbook cookbook = mapper.toCookbook(cookbookDto);
-        Cookbook persistedCookbook = cookBookRepository.save(cookbook);
+        Cookbook persistedCookbook = cookbookRepository.save(cookbook);
         return mapper.toCookbookDto(persistedCookbook);
     }
 

@@ -1,5 +1,6 @@
 package com.tkforgeworks.cookconnect.socialservice.controller;
 
+import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.service.SocialInteractionService;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,11 @@ public class SocialInteractionController {
     public ResponseEntity<SocialInteractionDto> bookmarkTargetRecipe(@PathVariable("socialId") Long socialId,
                                                                      @PathVariable("targetRecipeId") Long targetRecipeId) {
         return ResponseEntity.accepted().body(socialInteractionService.bookmarkTargetRecipe(socialId, targetRecipeId));
+    }
+    @PostMapping("/{socialId}/create-cookbook")
+    public ResponseEntity<SocialInteractionDto> createCookbookForSI(@PathVariable("socialId") Long socialId,
+                                                                    @RequestBody CookbookDto cookbookDto) {
+        return ResponseEntity.accepted().body(socialInteractionService.createCookBookForSI(socialId, cookbookDto));
     }
     //PUT
     //DELETE

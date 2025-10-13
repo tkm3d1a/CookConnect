@@ -1,11 +1,13 @@
 package com.tkforgeworks.cookconnect.socialservice.service;
 
 import com.tkforgeworks.cookconnect.socialservice.model.SocialInteraction;
+import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.model.mapper.SocialInteractionMapper;
 import com.tkforgeworks.cookconnect.socialservice.repository.SocialInteractionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -44,11 +46,19 @@ public class SocialInteractionService {
         return mapper.toSocialInteractionDto(savedSocialInteraction);
     }
 
+    @Transactional
     public SocialInteractionDto followTargetUser(Long socialId, Long targetUserId) {
         SocialInteraction foundSI = findOrThrow(socialId);
-        if(!foundSI.getFollowingIds().add(targetUserId)){
+        SocialInteraction foundSITargetUser = findOrThrow(targetUserId);
+
+        if(foundSI.getFollowingIds().contains(foundSITargetUser.getForUserId())){
             throw new RuntimeException(String.format("All-ready following target user id %s", targetUserId));
         }
+
+        foundSI.getFollowingIds().add(foundSITargetUser.getForUserId());
+        foundSITargetUser.getFollowerIds().add(foundSI.getForUserId());
+
+        socialInteractionRepository.save(foundSITargetUser);
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
@@ -60,11 +70,23 @@ public class SocialInteractionService {
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
+    public SocialInteractionDto createCookBookForSI(Long socialId, CookbookDto cookbookDto) {
+        SocialInteraction foundSI = findOrThrow(socialId);
+        foundSI.getCookbooks().add(mapper.toCookbook(cookBookService.createCookbook(cookbookDto)));
+        return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
+    }
+
+    @Transactional
     public void unfollowTargetUser(Long socialId, Long targetUserId) {
         SocialInteraction foundSi = findOrThrow(socialId);
-        if(!foundSi.getFollowingIds().remove(targetUserId)){
+        SocialInteraction foundSITargetUser = findOrThrow(targetUserId);
+        if(
+                !foundSi.getFollowingIds().remove(targetUserId) &&
+                !foundSITargetUser.getFollowerIds().remove(foundSi.getForUserId())
+        ){
             throw new RuntimeException(String.format("Not currently following target user id %s", targetUserId));
         }
+        socialInteractionRepository.save(foundSITargetUser);
         socialInteractionRepository.save(foundSi);
     }
 
@@ -83,4 +105,5 @@ public class SocialInteractionService {
     private SocialInteraction findOrThrow(Long socialId) {
         return socialInteractionRepository.findById(socialId).orElseThrow(() -> new RuntimeException("user not found"));
     }
+
 }
