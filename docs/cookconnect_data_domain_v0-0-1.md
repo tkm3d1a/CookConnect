@@ -265,7 +265,7 @@ Recipe ──(1:1)──→ IngredientList ──(1:*)──→ IngredientListIt
 
 #### CookBookEntry Entity
 **Purpose:** Recipe reference within a cookbook
-**Location:** `com.tkforgeworks.cookconnect.socialservice.model.CookBookEntry`
+**Location:** `com.tkforgeworks.cookconnect.socialservice.model.CookbookEntry`
 
 ```java
 @Entity CookBookEntry {

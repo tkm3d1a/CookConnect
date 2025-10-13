@@ -28,8 +28,8 @@ public class Cookbook {
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "cookbook_note_id", referencedColumnName = "id")
-    private CookBookNote note;
+    private CookbookNote note;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private Set<CookBookEntry> cookBookEntries = new HashSet<>();
+    private Set<CookbookEntry> cookBookEntries = new HashSet<>();
 }

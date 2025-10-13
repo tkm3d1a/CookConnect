@@ -1,6 +1,7 @@
 package com.tkforgeworks.cookconnect.socialservice.model;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,30 +15,34 @@ import java.util.Set;
 @ToString
 public class SocialInteraction {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long forUserId;
 
+    @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "user_following",
             joinColumns = @JoinColumn(name = "user_id")
     )
     @Column(name = "following_user_id")
-    private Set<Long> followingIds;
+    private Set<Long> followingIds = new HashSet<>();
+
+    @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "user_followed_by",
             joinColumns = @JoinColumn(name = "user_id")
     )
     @Column(name = "follower_user_id")
-    private Set<Long> followerIds;
+    private Set<Long> followerIds = new HashSet<>();
+
+    @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "bookmarked_recipes",
             joinColumns = @JoinColumn(name = "user_id")
     )
     @Column(name = "recipe_id")
-    private Set<Long> bookmarkedRecipeIds;
+    private Set<Long> bookmarkedRecipeIds = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     @ToString.Exclude
