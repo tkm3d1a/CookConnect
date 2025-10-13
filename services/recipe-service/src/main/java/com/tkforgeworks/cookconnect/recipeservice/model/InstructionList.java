@@ -24,10 +24,15 @@ public class InstructionList {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             mappedBy = "id")
-    private Set<InstructionListItem> instructionListItems = new HashSet<>();
+    private Set<InstructionListItem> instructions = new HashSet<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void addListItem(InstructionListItem ingredientListItem){
+        instructions.add(ingredientListItem);
+        ingredientListItem.setInstructionList(this);
+    }
 }
