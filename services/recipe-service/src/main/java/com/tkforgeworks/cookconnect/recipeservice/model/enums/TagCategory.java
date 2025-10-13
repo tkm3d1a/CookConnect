@@ -1,12 +1,11 @@
 package com.tkforgeworks.cookconnect.recipeservice.model.enums;
 
 public enum TagCategory {
-    FUN,
-    NEW,
-    ADVENTUROUS,
-    EASY,
-    MEDIUM,
-    HARD,
-    COUPLES,
-    QUICK
+    TOTAL_TIME,
+    COOK_TIME,
+    PREP_TIME,
+    SKILL_REQUIRED,
+    EQUIPMENT_REQUIRED,
+    SPACE_REQUIRED,
+    OTHER
 }
