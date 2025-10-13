@@ -2,7 +2,7 @@
 
 > A practical recipe management platform with social features, built with Spring Boot microservices
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/yourusername/cookconnect)
+[![Version](https://img.shields.io/badge/version-0.0.5-blue.svg)](https://github.com/tkm3d1a/cookconnect)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -14,6 +14,7 @@
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
+- [API Endpoints](#api-endpoints)
 - [Configuration Management](#configuration-management)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -50,7 +51,7 @@ To simplify recipe management for home cooks while fostering a supportive commun
 
 ## Current Status
 
-**Version**: 0.0.1 - Early Development (Foundation Phase)
+**Version**: 0.0.5 - CRUD Phase Complete
 
 ### ✅ Completed
 - [x] Microservices architecture foundation
@@ -60,32 +61,42 @@ To simplify recipe management for home cooks while fostering a supportive commun
 - [x] Maven multi-module project setup
 - [x] JPA entities with proper relationships
 - [x] Docker Compose database stack
+- [x] Config Server implementation
+- [x] REST API endpoints (CRUD operations)
+- [x] Global exception handling for all services
+- [x] DTO pattern with MapStruct mappers
+- [x] Service layer business logic
 
 ### 🚧 In Progress
-- [ ] REST API endpoints for all services
+- [ ] API documentation (Swagger/OpenAPI - Issue #6)
 - [ ] Service-to-service communication
 - [ ] Authentication and authorization (planned: Keycloak)
-- [ ] Config Server implementation
+- [ ] Comprehensive test coverage
 
 ### 📋 Planned
 - [ ] Frontend application
 - [ ] API Gateway
 - [ ] Service discovery (Eureka)
 - [ ] Circuit breakers and resilience patterns
-- [ ] Comprehensive test coverage
+- [ ] Pagination for list endpoints
+- [ ] Advanced search and filtering
 
 ## Features
 
 ### Recipe Management Service
 
-**Must-Have Features:**
-- ✅ Recipe CRUD operations (data model complete)
+**Completed Features:**
+- ✅ Recipe creation (simple and detailed modes)
+- ✅ Recipe retrieval (individual and list all)
 - ✅ Ingredient lists with quantities and measurements
 - ✅ Step-by-step cooking instructions
 - ✅ Recipe categorization and tagging
-- ✅ Personal notes and modifications
-- 🚧 Recipe search (by name, ingredient, category)
 - ✅ Visibility controls (private, public, friends-only)
+- ✅ REST API endpoints with proper error handling
+
+**In Progress:**
+- 🚧 Recipe update and delete operations
+- 🚧 Recipe search (by name, ingredient, category)
 
 **Planned Enhancements:**
 - Recipe duplication/forking
@@ -96,25 +107,36 @@ To simplify recipe management for home cooks while fostering a supportive commun
 
 ### User Management Service
 
-**Must-Have Features:**
-- ✅ User registration and profile management
-- ✅ Extended profile with demographics
+**Completed Features:**
+- ✅ User registration (create new users)
+- ✅ User profile management (full CRUD)
+- ✅ Extended profile with demographics and addresses
+- ✅ Password management (add/update passwords)
 - ✅ Privacy controls
-- 🚧 Authentication system
+- ✅ REST API endpoints with proper error handling
+
+**In Progress:**
+- 🚧 Authentication system (planned: Keycloak)
 - 🚧 Password reset functionality
 
 **Planned Enhancements:**
 - Skill level tracking
 - Dietary restrictions and allergies
 - Email notifications
-- Account deletion with data cleanup
+- Account deletion with cascade cleanup
 
 ### Social Features Service
 
-**Must-Have Features:**
+**Completed Features:**
 - ✅ Follow/unfollow users
-- ✅ Recipe bookmarking
-- ✅ Cookbook collections
+- ✅ Recipe bookmarking/unbookmarking
+- ✅ Cookbook collections (full CRUD)
+- ✅ Cookbook entries management
+- ✅ Cookbook notes
+- ✅ Social profile management
+- ✅ REST API endpoints with proper error handling
+
+**In Progress:**
 - 🚧 Recipe rating system
 - 🚧 Activity feed
 
@@ -122,6 +144,7 @@ To simplify recipe management for home cooks while fostering a supportive commun
 - Recipe comments and reviews
 - User-to-user messaging
 - Recommendation engine
+- Social notifications
 
 ## Technology Stack
 
@@ -150,7 +173,7 @@ CookConnect follows a **microservices architecture** with database-per-service p
 ### Services
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │                     CookConnect Platform                     │
 ├─────────────────┬─────────────────┬──────────────────────────┤
 │  User Service   │ Recipe Service  │   Social Service         │
@@ -176,6 +199,210 @@ CookConnect follows a **microservices architecture** with database-per-service p
 - **Loose Coupling**: Services communicate via REST APIs (in development)
 - **Domain-Driven Design**: Clear service boundaries around business domains
 - **Eventual Consistency**: Cross-service data references use ID-based lookups
+
+## API Endpoints
+
+CookConnect provides RESTful APIs for all microservices. Each service runs on a dedicated port and exposes CRUD operations for its domain entities.
+
+### Service Base URLs
+
+| Service | Port | Base URL | Status |
+|---------|------|----------|--------|
+| User Service | 8081 | `http://localhost:8081` | ✅ Active |
+| Recipe Service | 8082 | `http://localhost:8082` | ✅ Active |
+| Social Service | 8083 | `http://localhost:8083` | ✅ Active |
+| Config Server | 8888 | `http://localhost:8888` | ✅ Active |
+
+### User Service API (`/cc-user`)
+
+**Base Path**: `http://localhost:8081/cc-user`
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| `GET` | `/cc-user` | Get all users | - |
+| `GET` | `/cc-user/{ccUserId}` | Get user by ID | - |
+| `POST` | `/cc-user` | Create new user | `CCUserDto` |
+| `POST` | `/cc-user/{ccUserId}/password-new` | Add/update password | `PasswordDto` |
+| `PUT` | `/cc-user/{ccUserId}` | Update user | `UpdateCCUserDTO` |
+| `DELETE` | `/cc-user/{ccUserId}` | Delete user | - |
+
+**Example Request - Create User**:
+```bash
+curl -X POST http://localhost:8081/cc-user \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "email": "john@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
+```
+
+**Example Response**:
+```json
+{
+  "id": 1,
+  "username": "johndoe",
+  "email": "john@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "createdAt": "2025-10-13T10:30:00"
+}
+```
+
+### Recipe Service API (`/recipes`)
+
+**Base Path**: `http://localhost:8082/recipes`
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| `GET` | `/recipes` | Get all recipes (summary) | - |
+| `POST` | `/recipes` | Create simple recipe | `RecipeCreateSimpleDto` |
+| `POST` | `/recipes/detailed` | Create detailed recipe | `RecipeCreateDetailedDto` |
+
+**Example Request - Create Simple Recipe**:
+```bash
+curl -X POST http://localhost:8082/recipes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Classic Chocolate Chip Cookies",
+    "description": "Delicious homemade cookies",
+    "creatorUserId": 1,
+    "visibility": "PUBLIC"
+  }'
+```
+
+**Example Request - Create Detailed Recipe**:
+```bash
+curl -X POST http://localhost:8082/recipes/detailed \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Spaghetti Carbonara",
+    "description": "Traditional Italian pasta dish",
+    "creatorUserId": 1,
+    "visibility": "PUBLIC",
+    "ingredients": [
+      {
+        "name": "Spaghetti",
+        "quantity": 400,
+        "unit": "GRAMS"
+      },
+      {
+        "name": "Eggs",
+        "quantity": 4,
+        "unit": "WHOLE"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "instruction": "Cook pasta according to package directions"
+      },
+      {
+        "stepNumber": 2,
+        "instruction": "Beat eggs in a bowl"
+      }
+    ],
+    "tags": [
+      {
+        "tagName": "Italian",
+        "category": "CUISINE"
+      }
+    ]
+  }'
+```
+
+### Social Service API
+
+#### Cookbook Management (`/cookbook`)
+
+**Base Path**: `http://localhost:8083/cookbook`
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| `GET` | `/cookbook` | Get all cookbooks | - |
+| `GET` | `/cookbook/{cookbookId}` | Get cookbook by ID | - |
+| `GET` | `/cookbook/{cookbookId}/entries` | Get all entries in cookbook | - |
+| `GET` | `/cookbook/{cookbookId}/entries/{entryId}` | Get specific entry | - |
+| `GET` | `/cookbook/{cookbookId}/note` | Get cookbook note | - |
+| `POST` | `/cookbook` | Create new cookbook | `CookbookDto` |
+| `POST` | `/cookbook/{cookbookId}/entries` | Add entry to cookbook | `CookbookEntryDto` |
+| `POST` | `/cookbook/{cookbookId}/note` | Add note to cookbook | `CookbookNoteDto` |
+| `PUT` | `/cookbook/{cookbookId}` | Update cookbook | `CookbookDto` |
+| `PUT` | `/cookbook/{cookbookId}/entries/{entryId}` | Update entry | `CookbookEntryDto` |
+| `PUT` | `/cookbook/{cookbookId}/note` | Update note | `CookbookNoteDto` |
+| `DELETE` | `/cookbook/{cookbookId}` | Delete cookbook | - |
+| `DELETE` | `/cookbook/{cookbookId}/entries` | Delete all entries | - |
+| `DELETE` | `/cookbook/{cookbookId}/entries/{entryId}` | Delete specific entry | - |
+| `DELETE` | `/cookbook/{cookbookId}/note` | Delete cookbook note | - |
+
+**Example Request - Create Cookbook**:
+```bash
+curl -X POST http://localhost:8083/cookbook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Favorite Desserts",
+    "description": "A collection of my go-to dessert recipes",
+    "userId": 1,
+    "visibility": "PUBLIC"
+  }'
+```
+
+#### Social Interactions (`/social`)
+
+**Base Path**: `http://localhost:8083/social`
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| `GET` | `/social/{socialId}` | Get social profile | - |
+| `GET` | `/social/{socialId}/followers` | Get list of follower IDs | - |
+| `GET` | `/social/{socialId}/following` | Get list of following IDs | - |
+| `GET` | `/social/{socialId}/bookmarks` | Get list of bookmarked recipe IDs | - |
+| `POST` | `/social` | Create social profile | `SocialInteractionDto` |
+| `POST` | `/social/{socialId}/follow/{targetUserId}` | Follow a user | - |
+| `POST` | `/social/{socialId}/bookmark/{targetRecipeId}` | Bookmark a recipe | - |
+| `POST` | `/social/{socialId}/create-cookbook` | Create cookbook for user | `CookbookDto` |
+| `DELETE` | `/social/{socialId}/follow/{targetUserId}` | Unfollow a user | - |
+| `DELETE` | `/social/{socialId}/bookmark/{targetRecipeId}` | Remove bookmark | - |
+
+**Example Request - Follow User**:
+```bash
+curl -X POST http://localhost:8083/social/1/follow/5
+```
+
+**Example Request - Bookmark Recipe**:
+```bash
+curl -X POST http://localhost:8083/social/1/bookmark/42
+```
+
+### Common Response Patterns
+
+All services implement consistent error handling with the following response structure:
+
+**Success Response** (2xx):
+```json
+{
+  "data": { /* entity data */ }
+}
+```
+
+**Error Response** (4xx/5xx):
+```json
+{
+  "timestamp": "2025-10-13T10:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "User with ID 999 not found",
+  "path": "/cc-user/999"
+}
+```
+
+### API Documentation
+
+**Note**: Comprehensive API documentation with Swagger/OpenAPI is in development (see [Issue #6](https://github.com/tkm3d1a/CookConnect/issues/6)). Once complete, interactive API documentation will be available at:
+- User Service: `http://localhost:8081/swagger-ui.html`
+- Recipe Service: `http://localhost:8082/swagger-ui.html`
+- Social Service: `http://localhost:8083/swagger-ui.html`
 
 ## Configuration Management
 
@@ -433,13 +660,123 @@ docker ps
 
 You should see three MySQL containers running.
 
-Check service health (once REST APIs are implemented):
+Check service health:
 ```bash
-# These endpoints will be available once Actuator is fully configured
+# Health check endpoints (Actuator)
 curl http://localhost:8081/actuator/health  # User Service
 curl http://localhost:8082/actuator/health  # Recipe Service
 curl http://localhost:8083/actuator/health  # Social Service
 ```
+
+#### 9. Test the APIs
+
+Once services are running, test the REST endpoints to verify functionality.
+
+**Test User Service**:
+```bash
+# Create a new user
+curl -X POST http://localhost:8081/cc-user \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "firstName": "Test",
+    "lastName": "User"
+  }'
+
+# Get all users
+curl http://localhost:8081/cc-user
+
+# Get specific user (use ID from create response)
+curl http://localhost:8081/cc-user/1
+```
+
+**Test Recipe Service**:
+```bash
+# Create a simple recipe
+curl -X POST http://localhost:8082/recipes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Recipe",
+    "description": "A test recipe",
+    "creatorUserId": 1,
+    "visibility": "PUBLIC"
+  }'
+
+# Get all recipes
+curl http://localhost:8082/recipes
+```
+
+**Test Social Service**:
+```bash
+# Create a social profile
+curl -X POST http://localhost:8083/social \
+  -H "Content-Type: application/json" \
+  -d '{
+    "forUserId": 1
+  }'
+
+# Follow another user
+curl -X POST http://localhost:8083/social/1/follow/2
+
+# Create a cookbook
+curl -X POST http://localhost:8083/cookbook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Test Cookbook",
+    "description": "Testing cookbook creation",
+    "userId": 1,
+    "visibility": "PRIVATE"
+  }'
+```
+
+**Common Workflow - Create User and Recipe**:
+```bash
+# Step 1: Create a user
+USER_RESPONSE=$(curl -s -X POST http://localhost:8081/cc-user \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "chef123",
+    "email": "chef@example.com",
+    "firstName": "Gordon",
+    "lastName": "Cook"
+  }')
+
+# Step 2: Extract user ID (requires jq - install with: apt-get install jq or brew install jq)
+USER_ID=$(echo $USER_RESPONSE | jq -r '.id')
+
+# Step 3: Create a recipe for that user
+curl -X POST http://localhost:8082/recipes/detailed \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"title\": \"Chef's Special Pasta\",
+    \"description\": \"My signature dish\",
+    \"creatorUserId\": $USER_ID,
+    \"visibility\": \"PUBLIC\",
+    \"ingredients\": [
+      {
+        \"name\": \"Pasta\",
+        \"quantity\": 500,
+        \"unit\": \"GRAMS\"
+      }
+    ],
+    \"instructions\": [
+      {
+        \"stepNumber\": 1,
+        \"instruction\": \"Boil water and cook pasta\"
+      }
+    ]
+  }"
+
+# Step 4: Create social profile and bookmark the recipe
+curl -X POST http://localhost:8083/social \
+  -H "Content-Type: application/json" \
+  -d "{\"forUserId\": $USER_ID}"
+
+curl -X POST http://localhost:8083/social/$USER_ID/bookmark/1
+```
+
+For more detailed API documentation, see the [API Endpoints](#api-endpoints) section.
 
 ### Environment Variables
 
@@ -527,21 +864,37 @@ CookConnect/                               # Main application repository
 ├── services/                              # Microservices
 │   ├── user-service/                      # User management microservice
 │   │   ├── src/main/java/com/tkforgeworks/cookconnect/userservice/
+│   │   │   ├── controller/                # REST controllers (CCUserController)
 │   │   │   ├── model/                     # JPA entities
+│   │   │   │   ├── dto/                   # Data Transfer Objects
+│   │   │   │   └── mapper/                # MapStruct mappers
 │   │   │   ├── repository/                # Spring Data repositories
-│   │   │   └── service/                   # Business logic
+│   │   │   ├── service/                   # Business logic
+│   │   │   ├── errorhandler/              # Global exception handling
+│   │   │   └── config/                    # Service configuration
 │   │   └── pom.xml
 │   ├── recipe-service/                    # Recipe management microservice
 │   │   ├── src/main/java/com/tkforgeworks/cookconnect/recipeservice/
+│   │   │   ├── controller/                # REST controllers (RecipeController)
 │   │   │   ├── model/                     # Recipe entities
-│   │   │   ├── repository/
-│   │   │   └── service/
+│   │   │   │   ├── dto/                   # Data Transfer Objects
+│   │   │   │   ├── mapper/                # MapStruct mappers
+│   │   │   │   └── enums/                 # Enumerations
+│   │   │   ├── repository/                # Spring Data repositories
+│   │   │   ├── service/                   # Business logic
+│   │   │   ├── errorhandler/              # Global exception handling
+│   │   │   └── config/                    # Service configuration
 │   │   └── pom.xml
 │   ├── social-service/                    # Social features microservice
 │   │   ├── src/main/java/com/tkforgeworks/cookconnect/socialservice/
+│   │   │   ├── controller/                # REST controllers (CookbookController, SocialInteractionController)
 │   │   │   ├── model/                     # Social entities
-│   │   │   ├── repository/
-│   │   │   └── service/
+│   │   │   │   ├── dto/                   # Data Transfer Objects
+│   │   │   │   └── mapper/                # MapStruct mappers
+│   │   │   ├── repository/                # Spring Data repositories
+│   │   │   ├── service/                   # Business logic
+│   │   │   ├── errorhandler/              # Global exception handling
+│   │   │   └── config/                    # Service configuration
 │   │   └── pom.xml
 │   └── config-server/                     # Spring Cloud Config Server
 │       ├── src/main/resources/
@@ -570,21 +923,46 @@ CookConnect-config/                        # External configuration repository
 
 #### User Service
 **Package**: `com.tkforgeworks.cookconnect.userservice`
+**Port**: 8081
 
 Handles user identity, authentication, profiles, and personal information including addresses and skill levels.
 
+**Key Components**:
+- **Controllers**: `CCUserController` - REST endpoints for user management
+- **DTOs**: `CCUserDto`, `UpdateCCUserDTO`, `PasswordDto`, `ProfileInfoDto`, `AddressDto`
+- **Mappers**: `UserServiceMapper` - MapStruct entity-to-DTO conversions
+- **Services**: `CCUserService`, `ProfileInfoService` - Business logic
+- **Error Handling**: Global exception handler with `ExceptionController`
+
 #### Recipe Service
 **Package**: `com.tkforgeworks.cookconnect.recipeservice`
+**Port**: 8082
 
 Manages recipes, ingredients, cooking instructions, tags, and user notes. Implements a sophisticated list management pattern for complex recipe data.
 
+**Key Components**:
+- **Controllers**: `RecipeController` - REST endpoints for recipe management
+- **DTOs**: `RecipeDto`, `RecipeCreateSimpleDto`, `RecipeCreateDetailedDto`, `RecipeSummaryDto`, `IngredientDto`, `InstructionDto`, `TagDto`
+- **Mappers**: `RecipeServiceMapper` - MapStruct entity-to-DTO conversions
+- **Services**: `RecipeService`, `IngredientService`, `InstructionService`, `TagService` - Business logic
+- **Error Handling**: Global exception handler with `ExceptionController`
+
 #### Social Service
 **Package**: `com.tkforgeworks.cookconnect.socialservice`
+**Port**: 8083
 
 Handles social interactions including user follows, recipe bookmarks, and cookbook collections.
 
+**Key Components**:
+- **Controllers**: `SocialInteractionController`, `CookbookController` - REST endpoints for social features
+- **DTOs**: `SocialInteractionDto`, `CookbookDto`, `CookbookEntryDto`, `CookbookNoteDto`
+- **Mappers**: `SocialInteractionMapper` - MapStruct entity-to-DTO conversions
+- **Services**: `SocialInteractionService`, `CookbookService`, `CookbookEntryService`, `CookbookNoteService` - Business logic
+- **Error Handling**: Global exception handler with `ExceptionController`
+
 #### Config Server
 **Package**: `com.tkforgeworks.cookconnect.configserver`
+**Port**: 8888
 
 Centralized configuration management for all microservices using Spring Cloud Config.
 
@@ -748,6 +1126,83 @@ docker compose -f database-compose.yml up -d
 - Clean and rebuild: `mvn clean install`
 - Check Java version: `java -version` (should be 21)
 - Verify Maven version: `mvn -version` (should be 3.6+)
+
+#### API Issues
+
+**Problem**: HTTP 404 Not Found when calling API endpoints
+
+**Solutions:**
+
+1. **Verify service is running:**
+   ```bash
+   curl http://localhost:8081/actuator/health  # User Service
+   curl http://localhost:8082/actuator/health  # Recipe Service
+   curl http://localhost:8083/actuator/health  # Social Service
+   ```
+
+2. **Check you're using the correct port:**
+   - User Service: 8081
+   - Recipe Service: 8082
+   - Social Service: 8083
+
+3. **Verify endpoint path** - common mistakes:
+   - User endpoint is `/cc-user` not `/user`
+   - Recipe endpoint is `/recipes` not `/recipe`
+   - Social endpoints are `/social` and `/cookbook`
+
+**Problem**: HTTP 500 Internal Server Error
+
+**Solutions:**
+
+1. **Check service logs** for detailed error messages
+2. **Verify database is running:**
+   ```bash
+   docker ps | grep db
+   ```
+3. **Check database connectivity** in service logs
+4. **Ensure foreign key references are valid** (e.g., `creatorUserId` exists in user-service)
+
+**Problem**: HTTP 400 Bad Request
+
+**Solutions:**
+
+1. **Verify JSON payload is valid:**
+   - Check for missing required fields
+   - Ensure field names match DTO exactly (case-sensitive)
+   - Validate enum values (e.g., `visibility` must be `PUBLIC`, `PRIVATE`, or `FRIENDS_ONLY`)
+
+2. **Check Content-Type header:**
+   ```bash
+   -H "Content-Type: application/json"
+   ```
+
+3. **Test with minimal payload first**, then add fields incrementally
+
+**Problem**: Data not persisting or returning null values
+
+**Solutions:**
+
+1. **Check entity relationships** in database
+2. **Verify mapper configurations** (MapStruct may need rebuild)
+3. **Rebuild project:**
+   ```bash
+   mvn clean install
+   ```
+
+**Problem**: Cannot connect to service after starting
+
+**Solutions:**
+
+1. **Wait for service startup** - Spring Boot services take 30-60 seconds to fully start
+2. **Check logs for "Started [ServiceName]Application" message**
+3. **Verify port is not already in use:**
+   ```bash
+   # Windows
+   netstat -ano | findstr :8081
+
+   # Linux/macOS
+   lsof -i :8081
+   ```
 
 ## Versioning Strategy
 
@@ -914,24 +1369,37 @@ To skip validation for a specific PR (emergency fixes only):
 
 ## Roadmap
 
-### Version 0.1 (Current - Foundation)
-- ✅ Microservices architecture
+### Version 0.1.0 (Current - CRUD Phase Complete) ✅
+- ✅ Microservices architecture foundation
 - ✅ Data models and database schema
-- 🚧 REST API implementation
-- 🚧 Service communication
+- ✅ REST API implementation (CRUD operations)
+- ✅ Global exception handling
+- ✅ DTO pattern with MapStruct
+- ✅ User service (full CRUD)
+- ✅ Recipe service (create/read operations)
+- ✅ Social service (full CRUD for cookbooks and interactions)
 
-### Version 0.2 (Authentication & Core Features)
+### Version 0.2.0 (Next - Enhanced Features)
+- Complete recipe service (update/delete operations)
+- Basic recipe search (by name, ingredient, tags)
+- Swagger/OpenAPI documentation
+- Pagination for list endpoints
+- Enhanced error responses with validation
+
+### Version 0.3.0 (Authentication & Security)
 - Authentication with Keycloak
-- Complete REST APIs
-- Basic recipe search
-- User registration and login
+- JWT token validation
+- Role-based access control (RBAC)
+- Secure inter-service communication
+- User registration and login flows
 
-### Version 1.0 (MVP)
-- API Gateway
-- Service discovery
-- Complete recipe management
-- User profiles and social features
-- Recipe bookmarking and collections
+### Version 1.0.0 (MVP - Production Ready)
+- API Gateway (Spring Cloud Gateway)
+- Service discovery (Eureka)
+- Circuit breakers and resilience patterns
+- Comprehensive test coverage (unit, integration, e2e)
+- Monitoring and observability (Prometheus, Grafana)
+- Complete recipe management features
 
 ### Version 1.1
 - Media upload and recipe photos
