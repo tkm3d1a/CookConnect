@@ -14,7 +14,6 @@ import java.util.Set;
 @ToString
 public class SocialInteraction {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long forUserId;
 
     @ElementCollection(fetch = FetchType.EAGER)
