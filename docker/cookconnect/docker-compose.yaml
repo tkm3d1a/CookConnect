@@ -1,0 +1,63 @@
+services:
+  config-server:
+    image: 'tkforgeworks/cookconnect-config-server:0.0.1'
+    container_name: 'config-server'
+    ports:
+      - '8888:8888'
+    env_file:
+      - ./test-env/.env
+      - ./test-env/.env-config #Set to logger profile
+    healthcheck:
+      test: ["CMD","curl","-f","http://config-server:8888/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - cookconnect-network
+
+  recipe-service:
+    image: 'tkforgeworks/cookconnect-recipe-service:0.0.2'
+    container_name: 'recipe-service'
+    ports:
+      - '8080:8080'
+    env_file:
+      - ./test-env/.env
+      - ./test-env/.env-recipe #Set to test profile
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - cookconnect-network
+
+  social-service:
+    image: 'tkforgeworks/cookconnect-social-service:0.0.2'
+    container_name: 'social-service'
+    ports:
+      - '8081:8081'
+    env_file:
+      - ./test-env/.env
+      - ./test-env/.env-social #Set to test profile
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - cookconnect-network
+
+  user-service:
+    image: 'tkforgeworks/cookconnect-user-service:0.0.3'
+    container_name: 'user-service'
+    ports:
+      - '8082:8082'
+    env_file:
+      - ./test-env/.env
+      - ./test-env/.env-user #Set to test profile
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - cookconnect-network
+
+networks:
+  cookconnect-network:
+    external: true
