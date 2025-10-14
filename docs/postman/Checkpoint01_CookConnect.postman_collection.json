@@ -1,0 +1,701 @@
+{
+	"info": {
+		"_postman_id": "b74e5971-b237-4a25-90f4-c68dcd5be6be",
+		"name": "CookConnect",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24825934"
+	},
+	"item": [
+		{
+			"name": "config",
+			"item": [
+				{
+					"name": "Config server encrypt tool",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// <<SAVED IN 1PASS>>",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-config}}/encrypt",
+							"host": [
+								"{{local-config}}"
+							],
+							"path": [
+								"encrypt"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "global-base config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-config}}/global/default",
+							"host": [
+								"{{local-config}}"
+							],
+							"path": [
+								"global",
+								"default"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "recipe-service-base config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-config}}/recipe-service/default",
+							"host": [
+								"{{local-config}}"
+							],
+							"path": [
+								"recipe-service",
+								"default"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "social-service-base config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-config}}/social-service/default",
+							"host": [
+								"{{local-config}}"
+							],
+							"path": [
+								"social-service",
+								"default"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user-service-base config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-config}}/user-service/default",
+							"host": [
+								"{{local-config}}"
+							],
+							"path": [
+								"user-service",
+								"default"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Requests aimed at the config server and other methods to verify configurations are correct"
+		},
+		{
+			"name": "User Service",
+			"item": [
+				{
+					"name": "Find All users - empty",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-user-service}}/cc-user",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\":\"User_1\",\r\n    \"email\":\"user_1@base.com\",\r\n    \"profileInfo\":{\r\n        \"firstName\":\"User\",\r\n        \"lastName\":\"One\",\r\n        \"birthDate\":\"1999-10-12\",\r\n        \"addresses\":[\r\n            {\r\n                \"street\":\"{{$randomStreetName}}\",\r\n                \"city\":\"{{$randomCity}}\",\r\n                \"zipCode\":\"11111\",\r\n                \"state\": \"OTHER\",\r\n                \"country\": \"OTHER\"\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-user-service}}/cc-user",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create random user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\":\"test_{{$randomInt}}\",\r\n    \"email\":\"{{$randomFirstName}}{{$randomInt}}@{{$randomAbbreviation}}.com\",\r\n    \"profileInfo\":{\r\n        \"firstName\":\"{{$randomFirstName}}\",\r\n        \"lastName\":\"{{$randomLastName}}\",\r\n        \"birthDate\":\"1999-10-12\",\r\n        \"addresses\":[\r\n            {\r\n                \"street\":\"{{$randomStreetName}}\",\r\n                \"city\":\"{{$randomCity}}\",\r\n                \"zipCode\":\"11111\",\r\n                \"state\": \"OTHER\",\r\n                \"country\": \"OTHER\"\r\n            },\r\n            {\r\n                \"street\":\"{{$randomStreetName}}\",\r\n                \"city\":\"{{$randomCity}}\",\r\n                \"zipCode\":\"12345\",\r\n                \"state\": \"CA\"\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-user-service}}/cc-user",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find User",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-user-service}}/cc-user/4",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create new password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\":\"User_1\",\r\n    \"password\": \"IM A PASSWORD\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-user-service}}/cc-user/4/password-new",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user",
+								"4",
+								"password-new"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User 1",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 1,\r\n    \"username\": \"User_1\",\r\n    \"hasSocialInteraction\": true,\r\n    \"privateAccount\": true,\r\n    \"closedAccount\": true,\r\n    \"skillLevel\": \"PROFESSIONAL\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-user-service}}/cc-user/1",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All users - after update",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-user-service}}/cc-user",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local-user-service}}/cc-user/4",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All users - after delete",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-user-service}}/cc-user",
+							"host": [
+								"{{local-user-service}}"
+							],
+							"path": [
+								"cc-user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Social Service",
+			"item": [
+				{
+					"name": "socials",
+					"item": [
+						{
+							"name": "Get socials by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{local-social-service}}/social/1",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create social for user",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 3\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Bookmark Random recipe ID",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 1\r\n}"
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/4/bookmark/{{$randomInt}}",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"4",
+										"bookmark",
+										"{{$randomInt}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "follow Random user ID{EXPECT FAIL}",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 1\r\n}"
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/1/follow/{{$randomInt}}",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"1",
+										"follow",
+										"{{$randomInt}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "follow specific user ID",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 1\r\n}"
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/1/follow/1",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"1",
+										"follow",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "unfollow user ID",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 1\r\n}"
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/1/follow/2",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"1",
+										"follow",
+										"2"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "un-Bookmark recipe ID",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"forUserId\": 1\r\n}"
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/1/bookmark/272",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"1",
+										"bookmark",
+										"272"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add cookbook to social id",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    // \"id\": \"\",\r\n    \"name\": \"{{$randomAbbreviation}}\",\r\n    \"description\": \"{{$randomAdjective}} - {{$randomCatchPhrase}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{local-social-service}}/social/2/create-cookbook",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"social",
+										"2",
+										"create-cookbook"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "cookbooks",
+					"item": [
+						{
+							"name": "Get All cookbooks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{local-social-service}}/cookbook",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"cookbook"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create cookbook",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    // \"id\": \"\",\r\n    \"name\": \"{{$randomFileName}}\",\r\n    \"description\": \"{{$randomLoremText}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{local-social-service}}/cookbook",
+									"host": [
+										"{{local-social-service}}"
+									],
+									"path": [
+										"cookbook"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Recipe Service",
+			"item": [
+				{
+					"name": "Get all recipes summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local-recipe-service}}/recipes",
+							"host": [
+								"{{local-recipe-service}}"
+							],
+							"path": [
+								"recipes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create recipe - simple",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"Test {{$randomAbbreviation}}\",\r\n    \"description\": \"{{$randomLoremSentence}}\",\r\n    \"createdBy\": {{$randomInt}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-recipe-service}}/recipes",
+							"host": [
+								"{{local-recipe-service}}"
+							],
+							"path": [
+								"recipes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create recipe - detailed",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"Test {{$randomAbbreviation}}\",\r\n    \"description\": \"{{$randomLoremSentence}}\",\r\n    \"createdBy\": {{$randomInt}},\r\n    \"ingredientList\": { //OPTIONAL\r\n        \"listItems\": [\r\n            {\r\n                \"qty\": 1,\r\n                \"measurementValue\": \"CUP\",\r\n                \"ingredient\": {\r\n                    \"name\": \"Apple\",\r\n                    \"description\": \"A red apple\"\r\n                }\r\n            }\r\n        ]\r\n    },\r\n    \"instructionList\": { //OPTIONAL\r\n        \"listItems\": [\r\n            {\r\n                \"stepNumber\": 1,\r\n                \"instruction\": {\r\n                    \"text\": \"do this first\",\r\n                    \"note\": \"might be easier than you think\"\r\n                }\r\n            }\r\n        ]\r\n    },\r\n    \"tagList\": { //OPTIONAL\r\n        \"listItems\": [\r\n            {\r\n                \"tag\": {\r\n                    \"name\": \"SomeName5\",\r\n                    \"description\": \"some description\",\r\n                    \"category\": \"OTHER\"\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local-recipe-service}}/recipes/detailed",
+							"host": [
+								"{{local-recipe-service}}"
+							],
+							"path": [
+								"recipes",
+								"detailed"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "local-config",
+			"value": ""
+		},
+		{
+			"key": "local-user-service",
+			"value": ""
+		},
+		{
+			"key": "local-social-service",
+			"value": ""
+		},
+		{
+			"key": "local-recipe-service",
+			"value": ""
+		}
+	]
+}
