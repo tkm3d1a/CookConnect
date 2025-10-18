@@ -19,6 +19,7 @@
 
         <!-- SERVERS -->
         <module>services/config-server</module>
+        <module>services/eureka-server</module>
     </modules>
 
     <properties>
