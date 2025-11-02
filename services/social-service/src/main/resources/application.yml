@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: social-service
+  config:
+    import: 'configserver:${CONFIGSERVER_URL}:${CONFIGSERVER_PORT}'
