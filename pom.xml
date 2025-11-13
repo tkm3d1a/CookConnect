@@ -5,7 +5,7 @@
 
     <groupId>com.tkforgeworks.cookconnect</groupId>
     <artifactId>CookConnect</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
     <packaging>pom</packaging>
 
     <name>CookConnect</name>
@@ -20,6 +20,7 @@
         <!-- SERVERS -->
         <module>services/config-server</module>
         <module>services/eureka-server</module>
+        <module>servers/gateway-server</module>
     </modules>
 
     <properties>
