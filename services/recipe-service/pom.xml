@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>recipe-service</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <name>recipe-service</name>
 
     <properties>
