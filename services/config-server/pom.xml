@@ -5,12 +5,12 @@
     <parent>
         <groupId>com.tkforgeworks.cookconnect</groupId>
         <artifactId>CookConnect</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.6</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>config-server</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>config-server</name>
 
     <properties>
