@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>social-service</artifactId>
-    <version>0.03</version>
+    <version>0.0.3</version>
     <name>social-service</name>
 
     <properties>
