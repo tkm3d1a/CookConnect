@@ -12,7 +12,7 @@ spring:
           uri: https://github.com/tkm3d1a/CookConnect-config.git
           username: tkm3d1a
           password: '{cipher}267cf2b018ca864de93a3100b7a58752cc403935c500079fbce3154401cec87e74ab5754b8111dbece18d0eb48012e15f392045b62261c598356a25d41e5e1cd8845773d2363919bb26a42a9acf80776b9a71898b457f148ac0691de168d4bee8200f7a7b78f1f0943198ef4b04e085b'
-          search-paths: global,recipe-service,social-service,user-service
+          search-paths: global,recipe-service,social-service,user-service,eureka-server,gateway-server
 
 encrypt:
   key: '${ENCRYPT_KEY}'
@@ -31,3 +31,6 @@ management:
       enabled: false
     diskspace:
       enabled: true
+
+server:
+  port: 8888
