@@ -1,4 +1,4 @@
-package com.tkforgeworks.gatewayserver.utils;
+package com.tkforgeworks.cookconnect.gatewayserver.utils;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;

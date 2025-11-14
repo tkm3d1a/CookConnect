@@ -18,8 +18,8 @@
         <module>services/user-service</module>
 
         <!-- SERVERS -->
-        <module>services/config-server</module>
-        <module>services/eureka-server</module>
+        <module>servers/config-server</module>
+        <module>servers/eureka-server</module>
         <module>servers/gateway-server</module>
     </modules>
 

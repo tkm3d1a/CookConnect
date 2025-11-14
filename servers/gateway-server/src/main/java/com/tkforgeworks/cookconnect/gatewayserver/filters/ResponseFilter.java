@@ -1,6 +1,6 @@
-package com.tkforgeworks.gatewayserver.filters;
+package com.tkforgeworks.cookconnect.gatewayserver.filters;
 
-import com.tkforgeworks.gatewayserver.utils.FilterUtils;
+import com.tkforgeworks.cookconnect.gatewayserver.utils.FilterUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
