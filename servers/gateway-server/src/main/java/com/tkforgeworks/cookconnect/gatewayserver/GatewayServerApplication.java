@@ -1,4 +1,4 @@
-package com.tkforgeworks.gatewayserver;
+package com.tkforgeworks.cookconnect.gatewayserver;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
