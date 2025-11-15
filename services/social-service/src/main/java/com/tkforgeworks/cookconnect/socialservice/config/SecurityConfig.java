@@ -1,8 +1,9 @@
-package com.tkforgeworks.cookconnect.recipeservice.config;
+package com.tkforgeworks.cookconnect.socialservice.config;
 
-import com.tkforgeworks.cookconnect.recipeservice.common.IncomingRequestFilter;
-import com.tkforgeworks.cookconnect.recipeservice.common.JwtAuthConverter;
-import com.tkforgeworks.cookconnect.recipeservice.common.UserContextFilter;
+
+import com.tkforgeworks.cookconnect.socialservice.common.IncomingRequestFilter;
+import com.tkforgeworks.cookconnect.socialservice.common.JwtAuthConverter;
+import com.tkforgeworks.cookconnect.socialservice.common.UserContextFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,7 +42,6 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.addFilterBefore(incomingRequestFilter, SecurityContextHolderFilter.class);
-
         http.addFilterAfter(userContextFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();

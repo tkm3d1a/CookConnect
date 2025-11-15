@@ -1,4 +1,4 @@
-package com.tkforgeworks.cookconnect.recipeservice.common;
+package com.tkforgeworks.cookconnect.socialservice.common;
 
 import lombok.Getter;
 import lombok.Setter;

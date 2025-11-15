@@ -1,4 +1,4 @@
-package com.tkforgeworks.cookconnect.recipeservice.common;
+package com.tkforgeworks.cookconnect.socialservice.common;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,7 +19,6 @@ import java.io.IOException;
 @Component
 @Slf4j
 public class UserContextFilter extends OncePerRequestFilter {
-
     @Value("${tkforgeworks.jwt.converter.principle-attribute}")
     private String principleAttribute;
 
