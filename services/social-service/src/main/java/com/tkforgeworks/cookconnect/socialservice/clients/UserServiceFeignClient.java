@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 )
 public interface UserServiceFeignClient {
     @GetMapping("/api/v1/internal/{userId}")
-    SocialCreateResponseDto getUserById(@PathVariable("userId") long userId);
+    SocialCreateResponseDto getUserById(@PathVariable("userId") String userId);
 
     @PostMapping("/api/v1/internal/{userId}/social")
-    void addSocialInteraction(@PathVariable("userId") long userId);
+    void addSocialInteraction(@PathVariable("userId") String userId);
 
     @DeleteMapping("/api/v1/internal/{userId}/social")
-    void removeSocialInteraction(@PathVariable("userId") long userId);
+    void removeSocialInteraction(@PathVariable("userId") String userId);
 }

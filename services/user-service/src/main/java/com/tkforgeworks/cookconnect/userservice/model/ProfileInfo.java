@@ -22,7 +22,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class ProfileInfo {
     @Id
-    private Long id;
+    private String id;
 
     @OneToOne
     @MapsId

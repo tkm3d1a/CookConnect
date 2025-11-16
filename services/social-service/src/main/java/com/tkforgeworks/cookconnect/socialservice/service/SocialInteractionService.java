@@ -23,27 +23,27 @@ public class SocialInteractionService {
     private final UserServiceFeignClient userServiceFeignClient;
     private final SocialInteractionMapper mapper;
 
-    public SocialInteractionDto getSocialProfile(Long socialId) {
+    public SocialInteractionDto getSocialProfile(String socialId) {
         return mapper.toSocialInteractionDto(findOrThrow(socialId));
     }
 
-    public List<Long> getFollowers(Long socialId) {
+    public List<String> getFollowers(String socialId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         return foundSI.getFollowerIds().stream().toList();
     }
 
-    public List<Long> getFollowing(Long socialId) {
+    public List<String> getFollowing(String socialId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         return foundSI.getFollowingIds().stream().toList();
     }
 
-    public List<Long> getBookmarks(Long socialId) {
+    public List<Long> getBookmarks(String socialId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         return foundSI.getBookmarkedRecipeIds().stream().toList();
     }
 
     @Transactional
-    public void createNewSocial(long forUserId) {
+    public void createNewSocial(String forUserId) {
         if (socialInteractionRepository.existsSocialInteractionByForUserId(forUserId)) {
             throw new RuntimeException(String.format("Social Interaction already exists for user %s", forUserId));
         }
@@ -55,7 +55,7 @@ public class SocialInteractionService {
     }
 
     @Transactional
-    public SocialInteractionDto followTargetUser(Long socialId, Long targetUserId) {
+    public SocialInteractionDto followTargetUser(String socialId, String targetUserId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         SocialInteraction foundSITargetUser = findOrThrow(targetUserId);
 
@@ -70,7 +70,7 @@ public class SocialInteractionService {
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
-    public SocialInteractionDto bookmarkTargetRecipe(Long socialId, Long targetRecipeId) {
+    public SocialInteractionDto bookmarkTargetRecipe(String socialId, Long targetRecipeId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         if(!foundSI.getBookmarkedRecipeIds().add(targetRecipeId)){
             throw new RuntimeException(String.format("All-ready bookmarked recipe id %s", targetRecipeId));
@@ -78,14 +78,14 @@ public class SocialInteractionService {
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
-    public SocialInteractionDto createCookBookForSI(Long socialId, CookbookDto cookbookDto) {
+    public SocialInteractionDto createCookBookForSI(String socialId, CookbookDto cookbookDto) {
         SocialInteraction foundSI = findOrThrow(socialId);
         foundSI.getCookbooks().add(mapper.toCookbook(cookBookService.createCookbook(cookbookDto)));
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
     @Transactional
-    public void unfollowTargetUser(Long socialId, Long targetUserId) {
+    public void unfollowTargetUser(String socialId, String targetUserId) {
         SocialInteraction foundSi = findOrThrow(socialId);
         SocialInteraction foundSITargetUser = findOrThrow(targetUserId);
         if(
@@ -98,7 +98,7 @@ public class SocialInteractionService {
         socialInteractionRepository.save(foundSi);
     }
 
-    public void unbookmarkTargetRecipe(Long socialId, Long targetRecipeId) {
+    public void unbookmarkTargetRecipe(String socialId, long targetRecipeId) {
         SocialInteraction foundSI = findOrThrow(socialId);
         if(!foundSI.getBookmarkedRecipeIds().remove(targetRecipeId)){
             throw new RuntimeException(String.format("Not currently bookmarked recipe id %s", targetRecipeId));
@@ -107,7 +107,7 @@ public class SocialInteractionService {
     }
 
     @Transactional
-    public void removeSocialInteraction(Long forUserId) {
+    public void removeSocialInteraction(String forUserId) {
         SocialInteraction foundSI = findOrThrow(forUserId);
         userServiceFeignClient.removeSocialInteraction(foundSI.getForUserId());
         socialInteractionRepository.delete(foundSI);
@@ -116,7 +116,7 @@ public class SocialInteractionService {
     PRIVATE helper methods only
         used to eliminate repetitive or long code sections used commonly
      */
-    private SocialInteraction findOrThrow(Long socialId) {
+    private SocialInteraction findOrThrow(String socialId) {
         return socialInteractionRepository.findById(socialId).orElseThrow(() -> new RuntimeException("user not found"));
     }
 

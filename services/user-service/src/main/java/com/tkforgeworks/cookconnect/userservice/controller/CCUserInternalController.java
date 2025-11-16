@@ -16,18 +16,18 @@ public class CCUserInternalController {
     private final UserServiceMapper mapper;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<SocialCreateResponseDto> getCCUser(@PathVariable("userId") Long ccUserId) {
+    public ResponseEntity<SocialCreateResponseDto> getCCUser(@PathVariable("userId") String ccUserId) {
         return ResponseEntity.ok(mapper.ccUserDtoToSocialCreateResponseDto(ccUserService.findUser(ccUserId)));
     }
 
     @PostMapping("/{userId}/social")
-    public ResponseEntity<?> addSocial(@PathVariable("userId") long ccUserId){
+    public ResponseEntity<?> addSocial(@PathVariable("userId") String ccUserId){
         ccUserService.updateSocial(ccUserId, true);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{userId}/social")
-    public ResponseEntity<?> removeSocial(@PathVariable("userId") long ccUserId){
+    public ResponseEntity<?> removeSocial(@PathVariable("userId") String ccUserId){
         ccUserService.updateSocial(ccUserId, false);
         return ResponseEntity.ok().build();
     }

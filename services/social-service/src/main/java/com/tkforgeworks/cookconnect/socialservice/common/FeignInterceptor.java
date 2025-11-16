@@ -11,7 +11,7 @@ public class FeignInterceptor implements RequestInterceptor {
         log.debug("****FeignInterceptor intercept start****");
         log.debug("Feign headers before: {}", requestTemplate.headers());
         requestTemplate.header(UserContext.CORRELATION_ID_HEADER, UserContextHolder.getUserContext().getCorrelationId());
-        requestTemplate.header(UserContext.AUTHENTICATION_HEADER, UserContextHolder.getUserContext().getAuthToken());
+//        requestTemplate.header(UserContext.AUTHENTICATION_HEADER, UserContextHolder.getUserContext().getAuthToken());
         requestTemplate.header(UserContext.USER_ID_HEADER, UserContextHolder.getUserContext().getUserId());
         requestTemplate.header(UserContext.SOCIAL_ID_HEADER, UserContextHolder.getUserContext().getSocialId());
         log.debug("Feign headers after: {}", requestTemplate.headers());

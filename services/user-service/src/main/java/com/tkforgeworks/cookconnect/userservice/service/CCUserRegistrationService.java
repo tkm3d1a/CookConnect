@@ -51,7 +51,7 @@ public class CCUserRegistrationService {
             CCUser ccUser = new CCUser();
             ccUser.setUsername(requestDto.username());
             ccUser.setEmail(requestDto.email());
-            ccUser.setKeycloakId(keycloakUserId);
+            ccUser.setId(keycloakUserId);
 
             ProfileInfo profileInfo = new ProfileInfo();
             profileInfo.setFirstName(requestDto.firstName());
