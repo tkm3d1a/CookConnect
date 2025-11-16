@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>social-service</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.7</version>
     <name>social-service</name>
 
     <properties>
@@ -85,6 +85,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
