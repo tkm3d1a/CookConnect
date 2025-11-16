@@ -4,14 +4,13 @@ import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.service.SocialInteractionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/socials")
 @RequiredArgsConstructor
 public class SocialInteractionController {
     private final SocialInteractionService socialInteractionService;
@@ -34,12 +33,6 @@ public class SocialInteractionController {
         return ResponseEntity.ok(socialInteractionService.getBookmarks(socialId));
     }
     //POST
-    @PostMapping
-    public ResponseEntity<SocialInteractionDto> createSocialInteraction(@RequestBody SocialInteractionDto socialInteractionDto) {
-        SocialInteractionDto createdSocial = socialInteractionService.createNewSocial(socialInteractionDto);
-        URI location = URI.create("/social/" + createdSocial.forUserId());
-        return ResponseEntity.created(location).body(createdSocial);
-    }
     @PostMapping("/{socialId}/follow/{targetUserId}")
     public ResponseEntity<SocialInteractionDto> followTargetId(@PathVariable("socialId") Long socialId,
                                                                @PathVariable("targetUserId") Long targetUserId) {
@@ -50,10 +43,16 @@ public class SocialInteractionController {
                                                                      @PathVariable("targetRecipeId") Long targetRecipeId) {
         return ResponseEntity.accepted().body(socialInteractionService.bookmarkTargetRecipe(socialId, targetRecipeId));
     }
-    @PostMapping("/{socialId}/create-cookbook")
+    @PostMapping("/{socialId}/create-cookbook") //TODO: Migrate to cookbooks controller
     public ResponseEntity<SocialInteractionDto> createCookbookForSI(@PathVariable("socialId") Long socialId,
                                                                     @RequestBody CookbookDto cookbookDto) {
         return ResponseEntity.accepted().body(socialInteractionService.createCookBookForSI(socialId, cookbookDto));
+    }
+
+    @PostMapping("/{forUserId}")
+    public ResponseEntity<?> createSocialInteraction(@PathVariable("forUserId") long forUserId) {
+        socialInteractionService.createNewSocial(forUserId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
     //PUT
     //DELETE
@@ -68,5 +67,10 @@ public class SocialInteractionController {
                                                            @PathVariable("targetRecipeId") Long targetRecipeId) {
         socialInteractionService.unbookmarkTargetRecipe(socialId, targetRecipeId);
         return ResponseEntity.ok(String.format("User %s has unbookmarked recipe %s", socialId, targetRecipeId));
+    }
+    @DeleteMapping("/{forUserId}")
+    public ResponseEntity<?> removeSocialInteraction(@PathVariable("forUserId") Long forUserId) {
+        socialInteractionService.removeSocialInteraction(forUserId);
+        return ResponseEntity.ok().build();
     }
 }

@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cookbooks")
+@RequestMapping("/cookbooks") //TODO: Change to only do cookbooks by social id, not "generally all" cookbooks
 @RequiredArgsConstructor
 public class CookbookController {
     private final CookbookService cookbookService;

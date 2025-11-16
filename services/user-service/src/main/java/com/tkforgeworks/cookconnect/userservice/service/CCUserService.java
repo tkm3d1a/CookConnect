@@ -24,13 +24,6 @@ public class CCUserService {
     private final CCUserRegistrationService userRegistrationService;
     private final UserServiceMapper mapper;
 
-    /**
-     * This is an ADMIN only use case of potentially adding a user directly.  It should only be used if some recovery
-     * is needed to create a user that matches to an existing Keycloak user
-     *
-     * @param ccUserDto
-     * @return
-     */
     public CCUserDto createUser(CCUserDto ccUserDto) {
         if(ccUserDto.id() != null){
             //checks if the user was passed with an id
@@ -96,5 +89,11 @@ public class CCUserService {
             throw new RuntimeException(String.format("User with id %s could not be deleted", ccUserId));
         }
         return "User with id " + ccUserId + " deleted";
+    }
+
+    public void updateSocial(long ccUserId, boolean hasSocial) {
+        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)));
+        foundUser.setHasSocialInteraction(hasSocial);
+        userRepository.save(foundUser);
     }
 }

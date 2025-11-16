@@ -1,21 +1,26 @@
 package com.tkforgeworks.cookconnect.socialservice.service;
 
+import com.tkforgeworks.cookconnect.socialservice.clients.UserServiceFeignClient;
 import com.tkforgeworks.cookconnect.socialservice.model.SocialInteraction;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
+import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialCreateResponseDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.model.mapper.SocialInteractionMapper;
 import com.tkforgeworks.cookconnect.socialservice.repository.SocialInteractionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SocialInteractionService {
     private final SocialInteractionRepository socialInteractionRepository;
     private final CookbookService cookBookService;
+    private final UserServiceFeignClient userServiceFeignClient;
     private final SocialInteractionMapper mapper;
 
     public SocialInteractionDto getSocialProfile(Long socialId) {
@@ -37,13 +42,16 @@ public class SocialInteractionService {
         return foundSI.getBookmarkedRecipeIds().stream().toList();
     }
 
-    public SocialInteractionDto createNewSocial(SocialInteractionDto socialInteractionDto) {
-        if (socialInteractionRepository.existsSocialInteractionByForUserId(socialInteractionDto.forUserId())){
-            throw new RuntimeException(String.format("Social Interaction already exists for user %s", socialInteractionDto.forUserId()));
+    @Transactional
+    public void createNewSocial(long forUserId) {
+        if (socialInteractionRepository.existsSocialInteractionByForUserId(forUserId)) {
+            throw new RuntimeException(String.format("Social Interaction already exists for user %s", forUserId));
         }
-        SocialInteraction socialInteraction = mapper.toSocialInteraction(socialInteractionDto);
-        SocialInteraction savedSocialInteraction = socialInteractionRepository.save(socialInteraction);
-        return mapper.toSocialInteractionDto(savedSocialInteraction);
+        SocialCreateResponseDto responseDto = userServiceFeignClient.getUserById(forUserId);
+        userServiceFeignClient.addSocialInteraction(responseDto.id());
+        SocialInteraction socialInteraction = new SocialInteraction();
+        socialInteraction.setForUserId(responseDto.id());
+        socialInteractionRepository.save(socialInteraction);
     }
 
     @Transactional
@@ -98,6 +106,12 @@ public class SocialInteractionService {
         socialInteractionRepository.save(foundSI);
     }
 
+    @Transactional
+    public void removeSocialInteraction(Long forUserId) {
+        SocialInteraction foundSI = findOrThrow(forUserId);
+        userServiceFeignClient.removeSocialInteraction(foundSI.getForUserId());
+        socialInteractionRepository.delete(foundSI);
+    }
     /*
     PRIVATE helper methods only
         used to eliminate repetitive or long code sections used commonly
