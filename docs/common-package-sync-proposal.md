@@ -652,3 +652,763 @@ This proposal provides a comprehensive solution for:
 - Phase 2: 4-6 weeks (if pursued)
 
 **Risk Level**: Low - Both solutions are additive (don't modify existing code) and can be disabled if issues arise.
+
+---
+
+## Appendix C: Implementation Outlines
+
+This appendix provides detailed pseudocode and implementation outlines for all components needed to implement the proposal. Use these as blueprints for development.
+
+### C.1: validate-common-packages.sh Script
+
+**Location**: `.github/scripts/validate-common-packages.sh`
+
+**Purpose**: Validate that shared classes in the `common` package are identical across services
+
+**Pseudocode**:
+
+```bash
+#!/bin/bash
+# validate-common-packages.sh
+# Validates common package consistency across microservices
+
+set -e
+
+# Configuration
+SERVICES=("user-service" "recipe-service" "social-service")
+COMMON_PACKAGE="common"
+BASE_PATH="services"
+EXIT_CODE=0
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_header() {
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "$1"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+}
+
+normalize_file() {
+    # Input: file path
+    # Output: normalized content (to stdout)
+    local file=$1
+
+    cat "$file" | \
+        # Remove package declaration
+        sed '/^package /d' | \
+        # Normalize service-specific imports
+        sed 's/com\.tkforgeworks\.cookconnect\.\(user\|recipe\|social\)service\./com.tkforgeworks.cookconnect.SERVICE./g' | \
+        # Remove single-line comments (but NOT commented-out code)
+        # This is tricky - we want to keep functionality differences
+        sed '/^[[:space:]]*\/\//d' | \
+        # Remove multi-line comments
+        sed '/^[[:space:]]*\/\*/,/\*\//d' | \
+        # Remove trailing whitespace
+        sed 's/[[:space:]]*$//' | \
+        # Remove empty lines
+        sed '/^$/d'
+}
+
+build_file_matrix() {
+    # Build associative array of which files exist in which services
+    # Format: file_matrix[filename]="service1 service2 service3"
+
+    declare -g -A file_matrix
+
+    for service in "${SERVICES[@]}"; do
+        service_name="${service//-/}service"  # user-service -> userservice
+        common_dir="${BASE_PATH}/${service}/src/main/java/com/tkforgeworks/cookconnect/${service_name}/common"
+
+        if [ ! -d "$common_dir" ]; then
+            echo -e "${YELLOW}⚠️  Warning: $service has no common package${NC}"
+            continue
+        fi
+
+        # Find all .java files
+        while IFS= read -r filepath; do
+            filename=$(basename "$filepath")
+
+            # Add service to this file's list
+            if [ -z "${file_matrix[$filename]}" ]; then
+                file_matrix[$filename]="$service"
+            else
+                file_matrix[$filename]="${file_matrix[$filename]} $service"
+            fi
+        done < <(find "$common_dir" -maxdepth 1 -name "*.java" -type f)
+    done
+}
+
+validate_file() {
+    # Input: filename, space-separated list of services
+    # Output: 0 if consistent, 1 if inconsistent
+    local filename=$1
+    shift
+    local services_array=("$@")
+
+    # If only one service has this file, skip validation
+    if [ ${#services_array[@]} -eq 1 ]; then
+        echo -e "${BLUE}ℹ️  Skipping $filename: Only exists in ${services_array[0]} (service-specific)${NC}"
+        return 0
+    fi
+
+    # Build paths to all instances of this file
+    declare -A file_paths
+    declare -A file_checksums
+
+    for service in "${services_array[@]}"; do
+        service_name="${service//-/}service"
+        filepath="${BASE_PATH}/${service}/src/main/java/com/tkforgeworks/cookconnect/${service_name}/common/${filename}"
+        file_paths[$service]="$filepath"
+
+        # Normalize and checksum
+        checksum=$(normalize_file "$filepath" | sha256sum | awk '{print $1}')
+        file_checksums[$service]="$checksum"
+    done
+
+    # Check if all checksums match
+    first_checksum="${file_checksums[${services_array[0]}]}"
+    all_match=true
+
+    echo "Checking common/$filename:"
+    for service in "${services_array[@]}"; do
+        if [ "${file_checksums[$service]}" == "$first_checksum" ]; then
+            echo -e "  ${GREEN}✅${NC} $service     [SHA: ${file_checksums[$service]:0:12}...]"
+        else
+            echo -e "  ${RED}❌${NC} $service     [SHA: ${file_checksums[$service]:0:12}...]  MISMATCH!"
+            all_match=false
+        fi
+    done
+
+    if [ "$all_match" = false ]; then
+        # Store mismatch details for later reporting
+        echo "$filename|${services_array[*]}" >> /tmp/common_mismatches.txt
+        return 1
+    fi
+
+    return 0
+}
+
+generate_diff_report() {
+    # Read mismatches and generate detailed diff reports
+    if [ ! -f /tmp/common_mismatches.txt ]; then
+        return
+    fi
+
+    echo ""
+    print_header "INCONSISTENCY DETAILS"
+
+    diff_num=1
+    while IFS='|' read -r filename services; do
+        echo ""
+        echo "DIFF #${diff_num}: common/${filename}"
+        print_header ""
+
+        services_array=($services)
+
+        # Find canonical version (most common checksum)
+        # For simplicity, use first service as reference
+        reference_service="${services_array[0]}"
+        reference_file="${BASE_PATH}/${reference_service//-/}service/src/main/java/com/tkforgeworks/cookconnect/${reference_service//-/}service/common/${filename}"
+
+        # Compare each service to reference
+        for service in "${services_array[@]:1}"; do
+            service_name="${service//-/}service"
+            service_file="${BASE_PATH}/${service}/src/main/java/com/tkforgeworks/cookconnect/${service_name}/common/${filename}"
+
+            # Generate diff
+            echo "Comparing: $reference_service vs $service"
+            diff -u \
+                <(normalize_file "$reference_file" | head -20) \
+                <(normalize_file "$service_file" | head -20) \
+                || true  # Don't exit on diff
+            echo ""
+        done
+
+        ((diff_num++))
+    done < /tmp/common_mismatches.txt
+
+    echo ""
+    print_header "REMEDIATION STEPS"
+    echo "1. Review the diffs above"
+    echo "2. Decide which version should be canonical"
+    echo "3. Copy canonical version to all services"
+    echo "4. Update ONLY the package declaration line in each service"
+    echo "5. Re-run this validator to confirm consistency"
+}
+
+main() {
+    echo "🔍 Validating Common Package Consistency..."
+    echo ""
+
+    # Clean up temp file
+    rm -f /tmp/common_mismatches.txt
+
+    # Build matrix
+    build_file_matrix
+
+    # Validate each file
+    for filename in "${!file_matrix[@]}"; do
+        services_list="${file_matrix[$filename]}"
+        services_array=($services_list)
+
+        if ! validate_file "$filename" "${services_array[@]}"; then
+            EXIT_CODE=1
+        fi
+        echo ""
+    done
+
+    # Report results
+    if [ $EXIT_CODE -eq 0 ]; then
+        echo -e "${GREEN}✅ All common package files are consistent!${NC}"
+    else
+        echo -e "${RED}❌ Common package inconsistencies detected!${NC}"
+        generate_diff_report
+    fi
+
+    # Cleanup
+    rm -f /tmp/common_mismatches.txt
+
+    exit $EXIT_CODE
+}
+
+main
+```
+
+**Key Implementation Notes**:
+
+1. **Normalization Strategy**: Removes package declarations and normalizes service-specific imports, but preserves functional code including commented-out lines
+2. **File Matrix**: Builds a complete picture of which files exist where before validation
+3. **Service-Specific Files**: Automatically skips files that only exist in one service
+4. **Diff Reporting**: Shows actual code differences, not just "files don't match"
+5. **Exit Code**: Returns non-zero if any inconsistencies found (blocks CI/CD)
+
+---
+
+### C.2: version-merge-validation.yml Workflow
+
+**Location**: `.github/workflows/version-merge-validation.yml`
+
+**Purpose**: Validate version branch merges to main
+
+**Pseudocode/Outline**:
+
+```yaml
+name: Version Merge Validation
+
+# Trigger only on PRs to main from version branches (e.g., 0.1, 1.0)
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ============================================================
+  # JOB 1: Detect if this is a version branch merge
+  # ============================================================
+  detect-version-branch:
+    name: Detect Version Branch
+    runs-on: ubuntu-latest
+    outputs:
+      is_version_branch: ${{ steps.check.outputs.is_version_branch }}
+      version_number: ${{ steps.check.outputs.version_number }}
+
+    steps:
+      - name: Check if source branch is version branch
+        id: check
+        run: |
+          BRANCH="${{ github.head_ref }}"
+
+          # Version branch pattern: X.Y (e.g., 0.1, 1.0, 2.3)
+          if [[ "$BRANCH" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "is_version_branch=true" >> $GITHUB_OUTPUT
+            echo "version_number=$BRANCH" >> $GITHUB_OUTPUT
+            echo "✅ Detected version branch: $BRANCH"
+          else
+            echo "is_version_branch=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Not a version branch merge, skipping validation"
+          fi
+
+  # ============================================================
+  # JOB 2: Validate all services have updated versions
+  # ============================================================
+  validate-service-versions:
+    name: Validate Service Versions
+    runs-on: ubuntu-latest
+    needs: detect-version-branch
+    if: needs.detect-version-branch.outputs.is_version_branch == 'true'
+    outputs:
+      validation_results: ${{ steps.validate.outputs.results }}
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Compare service versions
+        id: validate
+        run: |
+          SERVICES=("user-service" "recipe-service" "social-service" "config-server" "eureka-server")
+
+          # Build markdown table
+          echo "| Service | Main Version | Branch Version | Status |" > /tmp/version_table.txt
+          echo "|---------|-------------|----------------|---------|" >> /tmp/version_table.txt
+
+          ALL_UPDATED=true
+
+          for service in "${SERVICES[@]}"; do
+            POM_PATH="services/${service}/pom.xml"
+
+            # Get version from main
+            MAIN_VER=$(git show origin/main:${POM_PATH} | \
+                       sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' | \
+                       tr -d '[:space:]')
+
+            # Get version from PR branch
+            BRANCH_VER=$(sed -n '/<\/parent>/,/<version>/ { /<version>/ { s/.*<version>\(.*\)<\/version>.*/\1/p; q } }' ${POM_PATH} | \
+                         tr -d '[:space:]')
+
+            # Check if service code changed
+            CODE_CHANGED=$(git diff origin/main...HEAD -- "services/${service}/src" | wc -l)
+
+            if [ "$CODE_CHANGED" -gt 0 ]; then
+              # Service changed, version must be updated
+              if [ "$MAIN_VER" == "$BRANCH_VER" ]; then
+                echo "| ${service} | ${MAIN_VER} | ${BRANCH_VER} | ❌ Not updated |" >> /tmp/version_table.txt
+                ALL_UPDATED=false
+              else
+                echo "| ${service} | ${MAIN_VER} | ${BRANCH_VER} | ✅ Updated |" >> /tmp/version_table.txt
+              fi
+            else
+              # Service didn't change, version update optional
+              if [ "$MAIN_VER" == "$BRANCH_VER" ]; then
+                echo "| ${service} | ${MAIN_VER} | ${BRANCH_VER} | ℹ️  Unchanged |" >> /tmp/version_table.txt
+              else
+                echo "| ${service} | ${MAIN_VER} | ${BRANCH_VER} | ✅ Updated |" >> /tmp/version_table.txt
+              fi
+            fi
+          done
+
+          # Save results
+          cat /tmp/version_table.txt
+
+          if [ "$ALL_UPDATED" = false ]; then
+            echo "❌ Some services with code changes do not have updated versions"
+            echo "results=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ All changed services have updated versions"
+            echo "results=passed" >> $GITHUB_OUTPUT
+          fi
+
+  # ============================================================
+  # JOB 3: Validate README updated
+  # ============================================================
+  validate-readme:
+    name: Validate README Documentation
+    runs-on: ubuntu-latest
+    needs: detect-version-branch
+    if: needs.detect-version-branch.outputs.is_version_branch == 'true'
+    outputs:
+      readme_updated: ${{ steps.check.outputs.updated }}
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Check README changes
+        id: check
+        run: |
+          VERSION="${{ needs.detect-version-branch.outputs.version_number }}"
+
+          # Check if README.md was modified
+          README_CHANGED=$(git diff origin/main...HEAD -- README.md | wc -l)
+
+          if [ "$README_CHANGED" -eq 0 ]; then
+            echo "❌ README.md was not updated"
+            echo "updated=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check if version number appears in README
+          if ! grep -q "$VERSION" README.md; then
+            echo "❌ README does not contain version $VERSION"
+            echo "updated=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check specific sections updated
+          CURRENT_STATUS_CHANGED=$(git diff origin/main...HEAD -- README.md | grep -A5 "## Current Status" | wc -l)
+
+          if [ "$CURRENT_STATUS_CHANGED" -gt 0 ]; then
+            echo "✅ README updated with version $VERSION"
+            echo "updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  README changed but 'Current Status' section may not be updated"
+            echo "updated=partial" >> $GITHUB_OUTPUT
+          fi
+
+  # ============================================================
+  # JOB 4: Validate common package consistency
+  # ============================================================
+  validate-common-packages:
+    name: Validate Common Package Consistency
+    runs-on: ubuntu-latest
+    needs: detect-version-branch
+    if: needs.detect-version-branch.outputs.is_version_branch == 'true'
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Run common package validation
+        run: |
+          chmod +x .github/scripts/validate-common-packages.sh
+          .github/scripts/validate-common-packages.sh
+
+  # ============================================================
+  # JOB 5: Generate comprehensive report
+  # ============================================================
+  report-results:
+    name: Post Validation Report
+    runs-on: ubuntu-latest
+    needs: [detect-version-branch, validate-service-versions, validate-readme, validate-common-packages]
+    if: always() && needs.detect-version-branch.outputs.is_version_branch == 'true'
+
+    steps:
+      - name: Generate PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.detect-version-branch.outputs.version_number }}';
+            const servicesResult = '${{ needs.validate-service-versions.result }}';
+            const readmeResult = '${{ needs.validate-readme.result }}';
+            const commonResult = '${{ needs.validate-common-packages.result }}';
+
+            let comment = '## 🔍 Version Merge Validation Report\\n\\n';
+            comment += `**Branch**: \`${version}\` → \`main\`\\n\\n`;
+
+            // Service versions section
+            comment += '### Service Versions\\n';
+            if (servicesResult === 'success') {
+              comment += '✅ All changed services have updated versions\\n\\n';
+            } else {
+              comment += '❌ Some services require version updates\\n\\n';
+            }
+
+            // README section
+            comment += '### README Documentation\\n';
+            if (readmeResult === 'success') {
+              comment += '✅ README updated with version information\\n\\n';
+            } else {
+              comment += '❌ README needs to be updated\\n\\n';
+            }
+
+            // Common packages section
+            comment += '### Common Package Consistency\\n';
+            if (commonResult === 'success') {
+              comment += '✅ All common package files are consistent\\n\\n';
+            } else {
+              comment += '❌ Common package inconsistencies detected - check workflow logs\\n\\n';
+            }
+
+            comment += '---\\n\\n';
+
+            if (servicesResult === 'success' && readmeResult === 'success' && commonResult === 'success') {
+              comment += '**✅ All checks passed! This version branch is ready to merge to main.**';
+            } else {
+              comment += '**❌ Some checks failed. Please review and fix the issues above before merging.**';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Check overall status
+        run: |
+          if [ "${{ needs.validate-service-versions.result }}" != "success" ] || \
+             [ "${{ needs.validate-readme.result }}" != "success" ] || \
+             [ "${{ needs.validate-common-packages.result }}" != "success" ]; then
+            echo "❌ Version merge validation failed"
+            exit 1
+          else
+            echo "✅ Version merge validation passed"
+          fi
+```
+
+**Key Implementation Notes**:
+
+1. **Conditional Execution**: Only runs on version branch → main PRs (uses regex pattern matching)
+2. **Independent Jobs**: Service versions, README, and common packages validated in parallel
+3. **Smart Service Detection**: Only requires version updates for services with actual code changes
+4. **README Validation**: Checks both that README changed AND contains the version number
+5. **Comprehensive Reporting**: Posts single unified comment with all results
+6. **Blocking**: Fails PR if any check fails
+
+---
+
+### C.3: Updates to Existing version-validation.yml
+
+**Purpose**: Add common package validation to existing feature PR workflow
+
+**Changes Required**:
+
+```yaml
+# In existing .github/workflows/version-validation.yml
+
+# Add new job after validate-service-versions
+jobs:
+  # ... existing jobs ...
+
+  validate-common-packages:
+    name: Validate Common Package Consistency
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    # Only run if changes detected
+    if: needs.detect-changes.outputs.has_changes == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: |
+          git pull origin ${{ github.head_ref }}
+
+      - name: Run common package validation
+        run: |
+          chmod +x .github/scripts/validate-common-packages.sh
+          .github/scripts/validate-common-packages.sh
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Common Package Consistency Check Failed**\\n\\nShared classes in the `common` package are not identical across services. Please review the workflow logs for detailed diffs and ensure all common classes match after updating only the package declaration.'
+            });
+
+  # Update report-status job to include common package results
+  report-status:
+    name: Report Validation Status
+    runs-on: ubuntu-latest
+    needs: [auto-increment-parent, detect-changes, validate-service-versions, validate-common-packages]
+    if: always()
+
+    steps:
+      # ... existing steps ...
+
+      - name: Check validation results
+        run: |
+          echo "📝 Parent version auto-incremented to: ${{ needs.auto-increment-parent.outputs.new_version }}"
+
+          # Check service versions
+          if [ "${{ needs.validate-service-versions.result }}" == "failure" ]; then
+            echo "❌ Service version validation failed"
+            exit 1
+          fi
+
+          # Check common packages (NEW)
+          if [ "${{ needs.validate-common-packages.result }}" == "failure" ]; then
+            echo "❌ Common package validation failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.detect-changes.outputs.has_changes }}" == "false" ]; then
+            echo "ℹ️  No service changes detected - validation skipped"
+          else
+            echo "✅ All validations passed"
+          fi
+```
+
+**Key Implementation Notes**:
+
+1. **Integration Point**: Adds as a parallel job to existing service version validation
+2. **Conditional Execution**: Only runs when service changes detected
+3. **Failure Handling**: Posts explanatory comment on PR if common package check fails
+4. **Status Aggregation**: Updated report-status job includes common package results
+
+---
+
+### C.4: Testing Strategy
+
+**Test Cases for validate-common-packages.sh**:
+
+```bash
+# Test 1: All files identical (should pass)
+# Setup: Ensure all 6 common files are identical across services
+./validate-common-packages.sh
+# Expected: Exit code 0, all checkmarks
+
+# Test 2: One file differs (should fail)
+# Setup: Modify UserContext.java in social-service only
+./validate-common-packages.sh
+# Expected: Exit code 1, diff shown for UserContext.java
+
+# Test 3: Service-specific file (should skip)
+# Setup: AuthorizationHelper.java only in social-service
+./validate-common-packages.sh
+# Expected: Exit code 0, "skipped" message for AuthorizationHelper.java
+
+# Test 4: Commented-out code difference (should fail)
+# Setup: Comment out a line in one service
+./validate-common-packages.sh
+# Expected: Exit code 1, diff shows commented line as difference
+
+# Test 5: Whitespace-only differences (should pass)
+# Setup: Add extra spaces/newlines in one file
+./validate-common-packages.sh
+# Expected: Exit code 0 (normalized away)
+```
+
+**Test Cases for version-merge-validation.yml**:
+
+```yaml
+# Test 1: Version branch with all validations passing
+# Setup:
+# - Create branch named "0.2"
+# - Update all service versions
+# - Update README
+# - Ensure common packages consistent
+# - Create PR to main
+# Expected: All checks green, approval comment posted
+
+# Test 2: Version branch with service version missing
+# Setup:
+# - Create branch named "0.2"
+# - Modify user-service code but don't update version
+# - Create PR to main
+# Expected: Service version check fails, specific error shown
+
+# Test 3: Version branch with README not updated
+# Setup:
+# - Create branch named "0.2"
+# - Update all services but not README
+# - Create PR to main
+# Expected: README check fails
+
+# Test 4: Non-version branch (should skip)
+# Setup:
+# - Create branch named "feature/add-auth"
+# - Create PR to main
+# Expected: Validation skipped entirely
+
+# Test 5: Version branch with common package drift
+# Setup:
+# - Create branch named "0.2"
+# - Have inconsistent common files
+# - Create PR to main
+# Expected: Common package check fails with diffs
+```
+
+---
+
+### C.5: Local Development Usage
+
+**Running validate-common-packages.sh locally**:
+
+```bash
+# From repository root
+chmod +x .github/scripts/validate-common-packages.sh
+.github/scripts/validate-common-packages.sh
+
+# To see detailed diff output even on success
+DEBUG=1 .github/scripts/validate-common-packages.sh
+
+# To test normalization on a specific file
+# (for debugging)
+source .github/scripts/validate-common-packages.sh
+normalize_file services/user-service/src/main/java/.../common/UserContext.java
+```
+
+**Simulating version merge validation locally**:
+
+```bash
+# Check if your branch would pass validation
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if it's a version branch
+if [[ "$BRANCH_NAME" =~ ^[0-9]+\.[0-9]+$ ]]; then
+  echo "This is a version branch: $BRANCH_NAME"
+
+  # Run all checks
+  echo "1. Validating service versions..."
+  # Compare each service's pom.xml between main and current branch
+
+  echo "2. Validating README..."
+  git diff main...HEAD -- README.md
+
+  echo "3. Validating common packages..."
+  .github/scripts/validate-common-packages.sh
+else
+  echo "Not a version branch, version merge validation would be skipped"
+fi
+```
+
+---
+
+### C.6: Deployment Checklist
+
+**Before merging to 0.1 branch**:
+
+- [ ] Create `.github/scripts/validate-common-packages.sh`
+- [ ] Make script executable: `chmod +x .github/scripts/validate-common-packages.sh`
+- [ ] Test script locally with current `0.1` branch (should fail on existing drift)
+- [ ] Fix drift issues found in `0.1` branch:
+  - [ ] Decide canonical version of `UserContext.java`
+  - [ ] Decide canonical version of `FeignInterceptor.java`
+  - [ ] Update all services to canonical versions
+  - [ ] Re-run script to confirm (should pass)
+- [ ] Create `.github/workflows/version-merge-validation.yml`
+- [ ] Update `.github/workflows/version-validation.yml` to add common package check
+- [ ] Test workflows on feature branch PR (should add common package validation)
+- [ ] Commit all changes to `0.1` branch
+- [ ] Update README with validation information
+
+**When ready to merge 0.1 to main**:
+
+- [ ] Create PR from `0.1` → `main`
+- [ ] Verify `version-merge-validation.yml` runs automatically
+- [ ] Review validation report posted to PR
+- [ ] Fix any issues identified
+- [ ] Wait for all checks to pass
+- [ ] Merge to main
+
+**Post-deployment**:
+
+- [ ] Monitor first few PRs to ensure validations work as expected
+- [ ] Adjust normalization rules if too strict/lenient
+- [ ] Document any edge cases discovered
+- [ ] Consider adding validation to pre-commit hooks for faster feedback
