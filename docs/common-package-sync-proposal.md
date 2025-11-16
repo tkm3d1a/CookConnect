@@ -16,39 +16,78 @@ The CookConnect platform consists of **5 microservices**:
 - **Business Services**: `user-service`, `recipe-service`, `social-service`
 - **Infrastructure Services**: `config-server`, `eureka-server`
 
-### Common Package Structure
+### Common Package Structure (from `0.1` branch)
 
-Each business service contains duplicated "common" code in two packages:
+Each business service contains a `common` package with shared authentication, authorization, and Feign client interceptor code:
 
-#### 1. `errorhandler` Package
-Located at: `services/{service}/src/main/java/com/tkforgeworks/cookconnect/{service}service/errorhandler/`
+**Location**: `services/{service}/src/main/java/com/tkforgeworks/cookconnect/{service}service/common/`
 
-**Classes** (4 files per service):
-- `ErrorMessage.java` - Error message structure with factory methods
-- `ExceptionController.java` - Global exception handler (@RestControllerAdvice)
-- `RestErrorList.java` - Collection wrapper for multiple errors
-- `ResponseWrapper.java` - Generic API response wrapper
+#### Files Present in All Three Services (6 files):
 
-#### 2. `config` Package
-Located at: `services/{service}/src/main/java/com/tkforgeworks/cookconnect/{service}service/config/`
+1. **`FeignInterceptor.java`** - Intercepts Feign client requests to add UserContext headers
+2. **`IncomingRequestFilter.java`** - Servlet filter to capture incoming request headers
+3. **`JwtAuthConverter.java`** - JWT authentication converter for Spring Security
+4. **`UserContext.java`** - Thread-safe context holder for user information (correlation ID, auth token, user ID, social ID, username)
+5. **`UserContextFilter.java`** - Filter to populate UserContext from request headers
+6. **`UserContextHolder.java`** - ThreadLocal holder for UserContext
 
-**Classes** (1 file per service):
-- `ServiceConfig.java` - Configuration properties (@ConfigurationProperties)
+#### Files Unique to Specific Services:
 
-### Current Duplication Issue
+- **`social-service` only**:
+  - `AuthorizationHelper.java` - Service-specific authorization logic for social interactions
 
-These classes are **functionally identical** across all three business services, differing only in:
-- Package declaration (e.g., `userservice` vs `recipeservice` vs `socialservice`)
-- Imports that reference the service-specific package
+### Current Drift Problem
 
-**Example**: `ErrorMessage.java` is identical in user-service and recipe-service except for line 1:
+Analysis of the `0.1` branch reveals **existing inconsistencies** in the `common` package files that should be identical:
+
+#### **Issue 1: UserContext.java Drift**
+
+**File**: `UserContext.java`
+
+**Inconsistency**:
+- **user-service & recipe-service**: Define `AUTHENTICATION_HEADER` constant
+- **social-service**: Has `AUTHENTICATION_HEADER` commented out
+
 ```java
-// user-service
-package com.tkforgeworks.cookconnect.userservice.errorhandler;
+// user-service and recipe-service (line 8):
+public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
 
-// recipe-service
-package com.tkforgeworks.cookconnect.recipeservice.errorhandler;
+// social-service (line 8):
+//    public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
 ```
+
+**Impact**: Code inconsistency that could lead to bugs if social-service later needs this header.
+
+#### **Issue 2: FeignInterceptor.java Drift**
+
+**File**: `FeignInterceptor.java`
+
+**Inconsistency**:
+- **user-service**: Contains Keycloak endpoint detection logic (lines 11-18) to skip UserContext headers for token/admin endpoints
+- **recipe-service & social-service**: Missing this Keycloak-specific logic
+
+```java
+// user-service only:
+if (url.contains("/realms/") && url.contains("/protocol/openid-connect/token")) {
+    log.debug("Skipping UserContext headers for Keycloak token endpoint");
+    return;
+}
+if (url.contains("/admin/realms/")) {
+    log.debug("Skipping UserContext headers for Keycloak admin endpoint");
+    return;
+}
+```
+
+**Impact**: recipe-service and social-service may incorrectly add UserContext headers to Keycloak requests.
+
+### Why This Matters
+
+These shared classes form the **distributed tracing and security infrastructure** for the entire platform. Inconsistencies can lead to:
+
+- **Authentication failures** across services
+- **Lost correlation IDs** in distributed traces
+- **Debugging nightmares** when behavior differs between services
+- **Copy-paste errors** when updating one service but forgetting others
 
 ---
 
@@ -130,40 +169,88 @@ jobs:
 **New Script**: `.github/scripts/validate-common-packages.sh`
 
 **Functionality**:
-1. Discover all Java files in `errorhandler` and `config` packages across services
-2. Normalize files by:
-   - Removing package declarations
-   - Normalizing service-specific imports
-   - Removing whitespace variations
-3. Compare normalized versions using SHA-256 checksums
-4. Report inconsistencies with detailed diffs
-5. Exit with error code if mismatches found
+1. Discover all Java files in `common` packages across all three business services
+2. Build a matrix of which files exist in which services
+3. For files that exist in multiple services, normalize each version by:
+   - Removing package declarations (e.g., `package com.tkforgeworks.cookconnect.userservice.common;`)
+   - Normalizing service-specific class references (e.g., `userservice.common` → `SERVICE.common`)
+   - Removing comments and whitespace variations
+4. Compare normalized versions using SHA-256 checksums
+5. Report inconsistencies with detailed diffs showing exact differences
+6. Exit with error code if mismatches found
 
-**Example Output**:
+**Example Output** (based on actual drift found in `0.1` branch):
 ```
 🔍 Validating Common Package Consistency...
 
-Checking errorhandler/ErrorMessage.java:
-  ✅ user-service     [SHA: a1b2c3...]
-  ✅ recipe-service   [SHA: a1b2c3...]
-  ✅ social-service   [SHA: a1b2c3...]
+Checking common/UserContext.java:
+  ✅ user-service     [SHA: a1b2c3d4...]
+  ✅ recipe-service   [SHA: a1b2c3d4...]
+  ❌ social-service   [SHA: 9f8e7d6c...]  MISMATCH!
 
-Checking errorhandler/ExceptionController.java:
-  ✅ user-service     [SHA: d4e5f6...]
-  ❌ recipe-service   [SHA: 123abc...]  MISMATCH!
-  ✅ social-service   [SHA: d4e5f6...]
+Checking common/FeignInterceptor.java:
+  ✅ user-service     [SHA: 5e4f3a2b...]
+  ❌ recipe-service   [SHA: 1a2b3c4d...]  MISMATCH!
+  ❌ social-service   [SHA: 1a2b3c4d...]  MISMATCH!
 
-❌ Inconsistencies detected!
+Checking common/UserContextHolder.java:
+  ✅ user-service     [SHA: 7f6e5d4c...]
+  ✅ recipe-service   [SHA: 7f6e5d4c...]
+  ✅ social-service   [SHA: 7f6e5d4c...]
 
-Diff between user-service and recipe-service:
-services/user-service/.../ExceptionController.java
-services/recipe-service/.../ExceptionController.java
+Skipping common/AuthorizationHelper.java:
+  ℹ️  Only exists in: social-service (service-specific implementation)
 
---- user-service
-+++ recipe-service
-@@ -45,7 +45,7 @@
--    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+❌ 2 files have inconsistencies across services!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIFF #1: common/UserContext.java
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Canonical version: user-service, recipe-service
+Divergent version: social-service
+
+--- canonical (user-service, recipe-service)
++++ divergent (social-service)
+@@ -6,7 +6,7 @@
+ @Setter
+ public class UserContext {
+     public static final String AUTHORIZATION_HEADER = "Authorization";
+-    public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
++//    public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
+     public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIFF #2: common/FeignInterceptor.java
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Canonical version: user-service
+Divergent version: recipe-service, social-service
+
+--- canonical (user-service)
++++ divergent (recipe-service, social-service)
+@@ -8,14 +8,6 @@
+ public class FeignInterceptor implements RequestInterceptor {
+     @Override
+     public void apply(RequestTemplate requestTemplate) {
+-        String url = requestTemplate.url();
+-        if (url.contains("/realms/") && url.contains("/protocol/openid-connect/token")) {
+-            log.debug("Skipping UserContext headers for Keycloak token endpoint");
+-            return;
+-        }
+-        if (url.contains("/admin/realms/")) {
+-            log.debug("Skipping UserContext headers for Keycloak admin endpoint");
+-            return;
+-        }
+         log.debug("****FeignInterceptor intercept start****");
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 To fix these issues:
+1. Decide which version should be canonical for each file
+2. Copy the canonical version to all services
+3. Update only the package declaration line
+4. Re-run validation to confirm consistency
 ```
 
 **Integration with GitHub Actions**:
@@ -195,7 +282,7 @@ Add to existing `version-validation.yml` (for feature PRs) and new `version-merg
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ Common package consistency check failed. Please ensure all shared classes in `errorhandler` and `config` packages are identical across services.'
+              body: '❌ Common package consistency check failed. Please ensure all shared classes in the `common` package are identical across services. Check the workflow logs for detailed diffs.'
             });
 ```
 
@@ -208,14 +295,20 @@ Add to existing `version-validation.yml` (for feature PRs) and new `version-merg
 services/
   common-lib/           # New shared module
     src/main/java/com/tkforgeworks/cookconnect/common/
-      errorhandler/     # Moved from individual services
-      config/           # Moved from individual services
+      FeignInterceptor.java
+      IncomingRequestFilter.java
+      JwtAuthConverter.java
+      UserContext.java
+      UserContextFilter.java
+      UserContextHolder.java
     pom.xml
   user-service/
     pom.xml             # Add dependency on common-lib
   recipe-service/
     pom.xml             # Add dependency on common-lib
   social-service/
+    src/main/java/.../socialservice/common/
+      AuthorizationHelper.java    # Keep service-specific class
     pom.xml             # Add dependency on common-lib
 ```
 
@@ -256,8 +349,8 @@ services/
 
 **Month 2-3: Centralized Common Library**
 1. Design shared module structure
-2. Extract errorhandler package
-3. Extract config package
+2. Extract common package (6 shared classes)
+3. Keep service-specific classes in individual services (e.g., AuthorizationHelper)
 4. Update all service dependencies
 5. Comprehensive integration testing
 6. Update CI/CD for multi-module build
@@ -268,13 +361,10 @@ services/
 
 ### Common Package Detection Logic
 
-**Packages to Monitor**:
+**Package to Monitor**:
 ```bash
-# Define common package patterns
-COMMON_PACKAGES=(
-  "errorhandler"
-  "config"
-)
+# The common package in each service
+COMMON_PACKAGE="common"
 
 # Services to check
 SERVICES=(
@@ -282,6 +372,12 @@ SERVICES=(
   "recipe-service"
   "social-service"
 )
+
+# Build file paths
+for service in "${SERVICES[@]}"; do
+  COMMON_DIR="services/${service}/src/main/java/com/tkforgeworks/cookconnect/${service//-/}service/common/"
+  # Find all .java files in this directory
+done
 ```
 
 **Normalization Process**:
@@ -289,16 +385,24 @@ SERVICES=(
 normalize_file() {
   local file=$1
 
-  # Remove package declaration
-  sed '/^package /d' "$file" |
-
-  # Normalize service-specific imports
-  sed 's/com\.tkforgeworks\.cookconnect\.[a-z]*service\./com.tkforgeworks.cookconnect.SERVICE./g' |
-
-  # Remove comments and extra whitespace
-  sed '/^\/\//d' | sed '/^\/\*/,/\*\//d' | sed 's/[[:space:]]*$//'
+  cat "$file" | \
+    # Remove package declaration
+    sed '/^package /d' | \
+    # Normalize service-specific imports (userservice/recipeservice/socialservice → SERVICE)
+    sed 's/com\.tkforgeworks\.cookconnect\.[a-z]*service\./com.tkforgeworks.cookconnect.SERVICE./g' | \
+    # Remove single-line comments
+    sed '/^[[:space:]]*\/\//d' | \
+    # Remove multi-line comments (/* ... */)
+    sed '/^[[:space:]]*\/\*/,/\*\//d' | \
+    # Remove trailing whitespace
+    sed 's/[[:space:]]*$//' | \
+    # Remove empty lines
+    sed '/^$/d'
 }
 ```
+
+**Important Note on Normalization**:
+The normalization process removes comments because the validator compares **functional equivalence**, not stylistic choices. However, this means that a commented-out line (like `// public static final String AUTHENTICATION_HEADER`) will be treated differently than an active line. This is intentional - commenting out code is a functional change, not just a style difference.
 
 **Checksum Comparison**:
 ```bash
@@ -408,15 +512,20 @@ Track via GitHub Actions:
 
 ### Q1: What if a service doesn't need all common classes?
 
-**A**: The validation only checks classes that exist in multiple services. If `user-service` has `ErrorMessage.java` but `social-service` doesn't, no validation occurs. Only when both have the same filename are they compared.
+**A**: The validation only checks classes that exist in multiple services. For example, `social-service` has `AuthorizationHelper.java` but the other services don't - this is fine. The validator skips it since it only exists in one service. Only when multiple services have the same filename (e.g., `UserContext.java`) are they compared.
 
 ### Q2: Can I intentionally make a common class different in one service?
 
-**A**: Yes, but rename it to signal the difference (e.g., `UserSpecificErrorMessage.java`). The validator only compares files with identical names.
+**A**: Yes, but rename it to signal the difference (e.g., `SocialUserContext.java` instead of `UserContext.java`). The validator only compares files with identical names. If you need service-specific behavior, create a new class with a unique name.
 
 ### Q3: What about auto-formatting differences?
 
-**A**: The normalization process removes whitespace, comments, and formatting differences before comparison. Only functional code differences trigger failures.
+**A**: The normalization process removes whitespace and formatting differences before comparison. Only functional code differences trigger failures.
+
+**Important**: Commented-out code IS considered a functional difference. For example:
+- `public static final String FOO = "bar";` ≠ `// public static final String FOO = "bar";`
+
+This is intentional - commenting out code changes functionality, not just style.
 
 ### Q4: How do I update a common class across all services?
 
@@ -439,32 +548,36 @@ Track via GitHub Actions:
 ```
 services/
 ├── user-service/src/main/java/com/tkforgeworks/cookconnect/userservice/
-│   ├── errorhandler/
-│   │   ├── ErrorMessage.java
-│   │   ├── ExceptionController.java
-│   │   ├── RestErrorList.java
-│   │   └── ResponseWrapper.java
-│   └── config/
-│       └── ServiceConfig.java
+│   └── common/
+│       ├── FeignInterceptor.java
+│       ├── IncomingRequestFilter.java
+│       ├── JwtAuthConverter.java
+│       ├── UserContext.java
+│       ├── UserContextFilter.java
+│       └── UserContextHolder.java
 │
 ├── recipe-service/src/main/java/com/tkforgeworks/cookconnect/recipeservice/
-│   ├── errorhandler/
-│   │   ├── ErrorMessage.java
-│   │   ├── ExceptionController.java
-│   │   ├── RestErrorList.java
-│   │   └── ResponseWrapper.java
-│   └── config/
-│       └── ServiceConfig.java
+│   └── common/
+│       ├── FeignInterceptor.java
+│       ├── IncomingRequestFilter.java
+│       ├── JwtAuthConverter.java
+│       ├── UserContext.java
+│       ├── UserContextFilter.java
+│       └── UserContextHolder.java
 │
 └── social-service/src/main/java/com/tkforgeworks/cookconnect/socialservice/
-    ├── errorhandler/
-    │   ├── ErrorMessage.java
-    │   ├── ExceptionController.java
-    │   ├── RestErrorList.java
-    │   └── ResponseWrapper.java
-    └── config/
-        └── ServiceConfig.java
+    └── common/
+        ├── AuthorizationHelper.java        ← Service-specific (OK to be unique)
+        ├── FeignInterceptor.java
+        ├── IncomingRequestFilter.java
+        ├── JwtAuthConverter.java
+        ├── UserContext.java
+        ├── UserContextFilter.java
+        └── UserContextHolder.java
 ```
+
+**Key Point**: The 6 files present in all services must be identical (after package name normalization).
+The `AuthorizationHelper.java` file is unique to social-service and will be ignored by validation.
 
 ### GitHub Actions Workflow Files
 
@@ -508,11 +621,13 @@ services/
 ### ✅ Common Package Consistency
 
 All shared classes validated:
-- ✅ errorhandler/ErrorMessage.java (3 services)
-- ✅ errorhandler/ExceptionController.java (3 services)
-- ✅ errorhandler/RestErrorList.java (3 services)
-- ✅ errorhandler/ResponseWrapper.java (3 services)
-- ✅ config/ServiceConfig.java (3 services)
+- ✅ common/FeignInterceptor.java (3 services)
+- ✅ common/IncomingRequestFilter.java (3 services)
+- ✅ common/JwtAuthConverter.java (3 services)
+- ✅ common/UserContext.java (3 services)
+- ✅ common/UserContextFilter.java (3 services)
+- ✅ common/UserContextHolder.java (3 services)
+- ℹ️  common/AuthorizationHelper.java (social-service only - skipped)
 
 ---
 
