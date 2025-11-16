@@ -70,4 +70,10 @@ public class CCUserRegistrationService {
 
         return mapper.ccUserToCCUserDto(savedUser);
     }
+
+    public void deleteUser(String ccUserId) {
+        log.info("Deleting user {}", ccUserId);
+        kcClient.deleteUser(ccUserId);
+        log.info("Deleted user {}", ccUserId);
+    }
 }

@@ -29,7 +29,6 @@ public class KeycloakAdminClient {
     public String createUser(String username, String email, String password,
                              String firstName, String lastName) {
         String adminToken = getAdminToken();
-        log.debug("Admin Token: {}", adminToken);
         Map<String,Object> credentials = new HashMap<>();
         credentials.put("type", "password");
         credentials.put("value", password);
@@ -75,7 +74,6 @@ public class KeycloakAdminClient {
             );
             KeycloakTokenResponseDto response = keycloakFeignClient
                     .getToken(realm,formParams);
-            log.debug("accessToken: {}", response.accessToken());
             return response.accessToken();
         } catch(FeignException feignException){
             log.error("Failed to get admin token: {}",  feignException.getMessage());

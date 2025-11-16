@@ -35,13 +35,6 @@ public class CCUserController {
         return ResponseEntity.created(location).body(createdUser);
     }
 
-//    @PostMapping("/{ccUserId}/password-new")
-//    public ResponseEntity<String> addNewPassword(@PathVariable("ccUserId") Long ccUserId,
-//                                                 @RequestBody PasswordDto password) {
-//        ccUserService.addNewPassword(ccUserId, password);
-//        return ResponseEntity.ok("success");
-//    }
-
     //PUT Mapping
     @PutMapping("/{ccUserId}")
     public ResponseEntity<CCUserDto> updateCCUser(@PathVariable("ccUserId") Long ccUserId,

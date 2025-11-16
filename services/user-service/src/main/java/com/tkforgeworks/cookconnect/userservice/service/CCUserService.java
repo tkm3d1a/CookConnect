@@ -9,6 +9,7 @@ import com.tkforgeworks.cookconnect.userservice.repository.CCUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,8 +21,16 @@ import java.util.Optional;
 public class CCUserService {
     private final CCUserRepository userRepository;
     private final ProfileInfoService profileInfoService;
+    private final CCUserRegistrationService userRegistrationService;
     private final UserServiceMapper mapper;
 
+    /**
+     * This is an ADMIN only use case of potentially adding a user directly.  It should only be used if some recovery
+     * is needed to create a user that matches to an existing Keycloak user
+     *
+     * @param ccUserDto
+     * @return
+     */
     public CCUserDto createUser(CCUserDto ccUserDto) {
         if(ccUserDto.id() != null){
             //checks if the user was passed with an id
@@ -73,27 +82,19 @@ public class CCUserService {
         return mapper.ccUserToCCUserDto(updatedUser);
     }
 
+    @Transactional
     public String deleteUserById(Long ccUserId) {
-        //TODO: add ifExists check prior to delete for better response message
-        if(!userRepository.existsById(ccUserId)){
-            log.error("User with id {} does not exists", ccUserId);
-            throw new RuntimeException(String.format("User with id %s not found", ccUserId));
+        try{
+            String foundUserKeycloakId = userRepository
+                    .findById(ccUserId)
+                    .orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)))
+                    .getKeycloakId();
+            userRegistrationService.deleteUser(foundUserKeycloakId);
+            userRepository.deleteById(ccUserId);
+        } catch(Exception ex){
+            log.error("User with id {} could not be deleted", ccUserId);
+            throw new RuntimeException(String.format("User with id %s could not be deleted", ccUserId));
         }
-        userRepository.deleteById(ccUserId);
         return "User with id " + ccUserId + " deleted";
     }
-
-//    public void addNewPassword(Long ccUserId, PasswordDto password) {
-//        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(()-> new RuntimeException("user not found"));
-//        if(!Objects.equals(foundUser.getUsername(), password.username())) {
-//            log.error("User with id {} does not match username passed: {}", ccUserId, password.username());
-//            throw new RuntimeException(String.format("User with id %s does not match username passed: %s", ccUserId, password.username()));
-//        }
-//        if(Objects.nonNull(foundUser.getPassword()) && !foundUser.getPassword().isEmpty()) {
-//            log.error("User {} already has password set", foundUser.getUsername());
-//            throw new RuntimeException(String.format("User with id %s already has password set", foundUser.getUsername()));
-//        }
-//        foundUser.setPassword(password.password());
-//        userRepository.save(foundUser);
-//    }
 }
