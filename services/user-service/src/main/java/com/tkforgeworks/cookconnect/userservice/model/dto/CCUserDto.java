@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public record CCUserDto(Long id,
+                        String keycloakId,
                         String username,
                         String email,
                         boolean hasSocialInteraction,

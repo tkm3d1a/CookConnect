@@ -1,7 +1,6 @@
 package com.tkforgeworks.cookconnect.userservice.controller;
 
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
-import com.tkforgeworks.cookconnect.userservice.model.dto.PasswordDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.UpdateCCUserDTO;
 import com.tkforgeworks.cookconnect.userservice.service.CCUserService;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +35,12 @@ public class CCUserController {
         return ResponseEntity.created(location).body(createdUser);
     }
 
-    @PostMapping("/{ccUserId}/password-new")
-    public ResponseEntity<String> addNewPassword(@PathVariable("ccUserId") Long ccUserId,
-                                                 @RequestBody PasswordDto password) {
-        ccUserService.addNewPassword(ccUserId, password);
-        return ResponseEntity.ok("success");
-    }
+//    @PostMapping("/{ccUserId}/password-new")
+//    public ResponseEntity<String> addNewPassword(@PathVariable("ccUserId") Long ccUserId,
+//                                                 @RequestBody PasswordDto password) {
+//        ccUserService.addNewPassword(ccUserId, password);
+//        return ResponseEntity.ok("success");
+//    }
 
     //PUT Mapping
     @PutMapping("/{ccUserId}")

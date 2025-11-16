@@ -20,8 +20,9 @@ public class CCUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true)
+    private String keycloakId;
     private String username;
-    private String password;
     private String email;
     private boolean hasSocialInteraction;
     private boolean privateAccount;
@@ -34,4 +35,15 @@ public class CCUser {
     private SkillLevel skillLevel;
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
     private ProfileInfo profileInfo;
+
+    public void setProfileInfo(ProfileInfo profileInfo) {
+        if (profileInfo == null) {
+            if (this.profileInfo != null) {
+                this.profileInfo.setUser(null);
+            }
+        } else {
+            profileInfo.setUser(this);
+        }
+        this.profileInfo = profileInfo;
+    }
 }

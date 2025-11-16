@@ -3,7 +3,6 @@ package com.tkforgeworks.cookconnect.userservice.service;
 import com.tkforgeworks.cookconnect.userservice.model.CCUser;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.NoProfileCCUserDTO;
-import com.tkforgeworks.cookconnect.userservice.model.dto.PasswordDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.UpdateCCUserDTO;
 import com.tkforgeworks.cookconnect.userservice.model.mapper.UserServiceMapper;
 import com.tkforgeworks.cookconnect.userservice.repository.CCUserRepository;
@@ -84,17 +83,17 @@ public class CCUserService {
         return "User with id " + ccUserId + " deleted";
     }
 
-    public void addNewPassword(Long ccUserId, PasswordDto password) {
-        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(()-> new RuntimeException("user not found"));
-        if(!Objects.equals(foundUser.getUsername(), password.username())) {
-            log.error("User with id {} does not match username passed: {}", ccUserId, password.username());
-            throw new RuntimeException(String.format("User with id %s does not match username passed: %s", ccUserId, password.username()));
-        }
-        if(Objects.nonNull(foundUser.getPassword()) && !foundUser.getPassword().isEmpty()) {
-            log.error("User {} already has password set", foundUser.getUsername());
-            throw new RuntimeException(String.format("User with id %s already has password set", foundUser.getUsername()));
-        }
-        foundUser.setPassword(password.password());
-        userRepository.save(foundUser);
-    }
+//    public void addNewPassword(Long ccUserId, PasswordDto password) {
+//        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(()-> new RuntimeException("user not found"));
+//        if(!Objects.equals(foundUser.getUsername(), password.username())) {
+//            log.error("User with id {} does not match username passed: {}", ccUserId, password.username());
+//            throw new RuntimeException(String.format("User with id %s does not match username passed: %s", ccUserId, password.username()));
+//        }
+//        if(Objects.nonNull(foundUser.getPassword()) && !foundUser.getPassword().isEmpty()) {
+//            log.error("User {} already has password set", foundUser.getUsername());
+//            throw new RuntimeException(String.format("User with id %s already has password set", foundUser.getUsername()));
+//        }
+//        foundUser.setPassword(password.password());
+//        userRepository.save(foundUser);
+//    }
 }
