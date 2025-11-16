@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/social")
+@RequestMapping("/socials")
 @RequiredArgsConstructor
 public class SocialInteractionController {
     private final SocialInteractionService socialInteractionService;

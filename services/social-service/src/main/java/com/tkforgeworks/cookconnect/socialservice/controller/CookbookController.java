@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cookbook")
+@RequestMapping("/cookbooks")
 @RequiredArgsConstructor
 public class CookbookController {
     private final CookbookService cookbookService;
