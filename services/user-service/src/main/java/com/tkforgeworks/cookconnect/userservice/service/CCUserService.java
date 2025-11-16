@@ -24,13 +24,6 @@ public class CCUserService {
     private final CCUserRegistrationService userRegistrationService;
     private final UserServiceMapper mapper;
 
-    /**
-     * This is an ADMIN only use case of potentially adding a user directly.  It should only be used if some recovery
-     * is needed to create a user that matches to an existing Keycloak user
-     *
-     * @param ccUserDto
-     * @return
-     */
     public CCUserDto createUser(CCUserDto ccUserDto) {
         if(ccUserDto.id() != null){
             //checks if the user was passed with an id
@@ -59,7 +52,7 @@ public class CCUserService {
         return mapper.ccUserToCCUserDto(createdUser);
     }
 
-    public CCUserDto findUser(Long ccUserId) {
+    public CCUserDto findUser(String ccUserId) {
         Optional<CCUser> ccUser = userRepository.findById(ccUserId);
         return ccUser.map(mapper::ccUserToCCUserDto).orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)));
     }
@@ -68,7 +61,7 @@ public class CCUserService {
         return mapper.ccUsersToCCUserDtos(userRepository.findAll());
     }
 
-    public CCUserDto updateUser(Long ccUserId, UpdateCCUserDTO updateCCUserDTO) {
+    public CCUserDto updateUser(String ccUserId, UpdateCCUserDTO updateCCUserDTO) {
         if(!Objects.equals(updateCCUserDTO.id(), ccUserId)){
             //TODO: BadRequestError
             log.error("User with id {} does not match id {}", updateCCUserDTO.id(), ccUserId);
@@ -83,18 +76,24 @@ public class CCUserService {
     }
 
     @Transactional
-    public String deleteUserById(Long ccUserId) {
+    public String deleteUserById(String ccUserId) {
         try{
-            String foundUserKeycloakId = userRepository
+            String foundUserId = userRepository
                     .findById(ccUserId)
                     .orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)))
-                    .getKeycloakId();
-            userRegistrationService.deleteUser(foundUserKeycloakId);
+                    .getId();
+            userRegistrationService.deleteUser(foundUserId);
             userRepository.deleteById(ccUserId);
         } catch(Exception ex){
             log.error("User with id {} could not be deleted", ccUserId);
             throw new RuntimeException(String.format("User with id %s could not be deleted", ccUserId));
         }
         return "User with id " + ccUserId + " deleted";
+    }
+
+    public void updateSocial(String ccUserId, boolean hasSocial) {
+        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)));
+        foundUser.setHasSocialInteraction(hasSocial);
+        userRepository.save(foundUser);
     }
 }

@@ -23,7 +23,7 @@ public class CCUserController {
     }
 
     @GetMapping("/{ccUserId}")
-    public ResponseEntity<CCUserDto> getCCUser(@PathVariable("ccUserId") Long ccUserId) {
+    public ResponseEntity<CCUserDto> getCCUser(@PathVariable("ccUserId") String ccUserId) {
         return ResponseEntity.ok(ccUserService.findUser(ccUserId));
     }
 
@@ -37,14 +37,14 @@ public class CCUserController {
 
     //PUT Mapping
     @PutMapping("/{ccUserId}")
-    public ResponseEntity<CCUserDto> updateCCUser(@PathVariable("ccUserId") Long ccUserId,
+    public ResponseEntity<CCUserDto> updateCCUser(@PathVariable("ccUserId") String ccUserId,
                                                   @RequestBody UpdateCCUserDTO updateCCUserDTO) {
         return ResponseEntity.ok(ccUserService.updateUser(ccUserId, updateCCUserDTO));
     }
 
     //DELETE Mapping
     @DeleteMapping("/{ccUserId}")
-    public ResponseEntity<String> deleteCCUser(@PathVariable("ccUserId") Long ccUserId) {
+    public ResponseEntity<String> deleteCCUser(@PathVariable("ccUserId") String ccUserId) {
         return ResponseEntity.ok(ccUserService.deleteUserById(ccUserId));
     }
 

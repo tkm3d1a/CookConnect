@@ -7,8 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface CCUserRepository extends JpaRepository<CCUser, Long> {
-    Optional<CCUser> findByKeycloakId(String keycloakId);
+public interface CCUserRepository extends JpaRepository<CCUser, String> {
     Optional<CCUser> findByUsername(String username);
     Optional<CCUser> findByEmail(String email);
     boolean existsByUsername(String username);

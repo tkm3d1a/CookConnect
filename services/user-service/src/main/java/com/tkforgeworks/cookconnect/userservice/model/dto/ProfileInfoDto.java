@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Set;
 
-public record ProfileInfoDto(Long id,
+public record ProfileInfoDto(String id,
                              String firstName,
                              String lastName,
                              Date birthDate,

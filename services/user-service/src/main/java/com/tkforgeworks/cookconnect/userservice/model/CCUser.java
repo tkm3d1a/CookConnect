@@ -18,11 +18,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CCUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
     @Column(unique = true)
-    private String keycloakId;
     private String username;
+    @Column(unique = true)
     private String email;
     private boolean hasSocialInteraction;
     private boolean privateAccount;
