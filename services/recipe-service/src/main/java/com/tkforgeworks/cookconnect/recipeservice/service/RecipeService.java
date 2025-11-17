@@ -14,6 +14,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -79,13 +82,23 @@ public class RecipeService {
     //PUT
     //DELETE
     //PRIVATE - UTILITY
+    private UserServiceResponseDto createAnonymousUser(){
+        return new UserServiceResponseDto("anonymous","anonymous",false,false);
+    }
+
     @CircuitBreaker(name = "main", fallbackMethod = "fallbackUserServiceGetExt")
     @Retry(name = "main")
     private UserServiceResponseDto getUserExt(String ccUserId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            return createAnonymousUser();
+        }
+
         try{
             return userServiceFeignClient.getUserById(ccUserId);
         } catch(FeignException.NotFound e) {
-            return new UserServiceResponseDto("anonymous","anonymous",false,false);
+            return createAnonymousUser();
         }
     }
 
