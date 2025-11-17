@@ -17,7 +17,7 @@ public class CCUserController {
     private final CCUserService ccUserService;
 
     //GET Mappings
-    @GetMapping
+    @GetMapping("/")
     @RateLimiter(name = "getAll")
     public ResponseEntity<List<CCUserDto>> getAllCCUsers() {
         return ResponseEntity.ok(ccUserService.getAllUsers());
@@ -30,7 +30,7 @@ public class CCUserController {
     }
 
     //POST Mappings
-    @PostMapping
+    @PostMapping("/")
     public ResponseEntity<CCUserDto> createCCUser(@RequestBody CCUserDto ccUserDto) {
         CCUserDto createdUser = ccUserService.createUser(ccUserDto);
         URI location = URI.create("/cc-user/" + createdUser.id());

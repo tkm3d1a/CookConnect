@@ -17,6 +17,14 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
+@Table(
+        indexes = {
+                @Index(name = "idx_recipe_created_by", columnList = "created_by"),
+                @Index(name = "idx_recipe_created_at", columnList = "created_at"),
+                @Index(name = "idx_recipe_title", columnList = "title"),
+                @Index(name = "idx_recipe_created_by_created_at", columnList = "created_by, created_at") // Composite index
+        }
+)
 public class Recipe {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

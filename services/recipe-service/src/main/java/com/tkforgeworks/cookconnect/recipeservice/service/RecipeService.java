@@ -14,13 +14,12 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,8 +35,8 @@ public class RecipeService {
 
 
     //GET
-    public List<RecipeSummaryDto> getAllRecipesSummary() {
-        return recipeRepository.findAll().stream().map(mapper::toRecipeSummaryDto).collect(Collectors.toList());
+    public Page<RecipeSummaryDto> getAllRecipesSummary(Pageable pageable) {
+        return recipeRepository.findAll(pageable).map(mapper::toRecipeSummaryDto);
     }
 
     //POST

@@ -16,6 +16,13 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        indexes = {
+                @Index(name = "idx_user_username", columnList = "username", unique = true),
+                @Index(name = "idx_user_email", columnList = "email", unique = true),
+                @Index(name = "idx_user_created_at", columnList = "created_at")
+        }
+)
 public class CCUser {
     @Id
     @Column(length = 36)

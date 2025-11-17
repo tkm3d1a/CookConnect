@@ -19,7 +19,7 @@ public class CookbookController {
     private final CookbookService cookbookService;
 
     //GET
-    @GetMapping
+    @GetMapping("/")
     @RateLimiter(name = "getAll")
     public ResponseEntity<List<CookbookDto>> getAllCookbooks() {
         return ResponseEntity.ok(cookbookService.getAllCookbooks());
@@ -42,7 +42,7 @@ public class CookbookController {
         return ResponseEntity.ok(cookbookService.getCookbookNote(cookbookId));
     }
     //POST
-    @PostMapping
+    @PostMapping("/")
     public ResponseEntity<CookbookDto> createCookbook(@RequestBody CookbookDto cookbookDto) {
         CookbookDto createdCbDto = cookbookService.createCookbook(cookbookDto);
         URI location = URI.create("/cookbook/" + createdCbDto.id());
