@@ -22,7 +22,6 @@ public class CookbookService {
     private final SocialInteractionMapper mapper;
 
     public List<CookbookDto> getAllCookbooks() {
-//        throw new RuntimeException("not yet implemented");
         return mapper.toCookbookDtoList(cookbookRepository.findAll());
     }
 
@@ -43,7 +42,6 @@ public class CookbookService {
     }
 
     public CookbookDto createCookbook(CookbookDto cookbookDto) {
-//        throw new RuntimeException("not yet implemented");
         if(Objects.nonNull(cookbookDto.id()) && cookbookRepository.existsById(cookbookDto.id())){
             throw new RuntimeException("cookbook already exists");
         }
