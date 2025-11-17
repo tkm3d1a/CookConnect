@@ -3,6 +3,7 @@ package com.tkforgeworks.cookconnect.userservice.controller;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserRegistrationRequestDto;
 import com.tkforgeworks.cookconnect.userservice.service.CCUserRegistrationService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ public class CCUserRegistrationController {
     private final CCUserRegistrationService ccUserRegistrationService;
 
     @PostMapping("/register")
+    @RateLimiter(name = "perUser")
     public ResponseEntity<?> registerUser(@RequestBody CCUserRegistrationRequestDto requestDto) {
         try{
             CCUserDto user = ccUserRegistrationService.registerUser(requestDto);

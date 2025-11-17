@@ -5,6 +5,7 @@ import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateSimpleDt
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeSummaryDto;
 import com.tkforgeworks.cookconnect.recipeservice.service.RecipeService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class RecipeController {
 
     //GET
     @GetMapping
+    @RateLimiter(name = "getAll")
     public ResponseEntity<List<RecipeSummaryDto>> getAllRecipes() {
         return ResponseEntity.ok(recipeService.getAllRecipesSummary());
     }
