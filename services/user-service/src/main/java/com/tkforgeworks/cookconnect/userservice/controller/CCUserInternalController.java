@@ -1,6 +1,6 @@
 package com.tkforgeworks.cookconnect.userservice.controller;
 
-import com.tkforgeworks.cookconnect.userservice.model.dto.SocialCreateResponseDto;
+import com.tkforgeworks.cookconnect.userservice.common.dto.UserServiceResponseDto;
 import com.tkforgeworks.cookconnect.userservice.model.mapper.UserServiceMapper;
 import com.tkforgeworks.cookconnect.userservice.service.CCUserService;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +16,8 @@ public class CCUserInternalController {
     private final UserServiceMapper mapper;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<SocialCreateResponseDto> getCCUser(@PathVariable("userId") String ccUserId) {
-        return ResponseEntity.ok(mapper.ccUserDtoToSocialCreateResponseDto(ccUserService.findUser(ccUserId)));
+    public ResponseEntity<UserServiceResponseDto> getCCUser(@PathVariable("userId") String ccUserId) {
+        return ResponseEntity.ok(mapper.ccUserDtoToUserServiceResponseDto(ccUserService.findUser(ccUserId)));
     }
 
     @PostMapping("/{userId}/social")

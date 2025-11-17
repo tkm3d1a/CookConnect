@@ -45,4 +45,20 @@ public class ExceptionController {
         );
         return ResponseEntity.badRequest().body(responseWrapper);
     }
+
+    @ExceptionHandler(value = { UserNotFoundException.class })
+    public @ResponseBody ResponseEntity<ResponseWrapper> handleUserNotFoundException(HttpServletRequest request,
+                                                                                RuntimeException e) {
+        log.info("ExceptionController.handleUserNotFoundException");
+        RestErrorList errorList = new RestErrorList(
+                HttpStatus.NOT_FOUND,
+                ErrorMessage.withMessage(e.getMessage())
+        );
+        ResponseWrapper responseWrapper = new ResponseWrapper(
+                null,
+                Collections.singletonMap("status",HttpStatus.NOT_FOUND),
+                errorList
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
+    }
 }

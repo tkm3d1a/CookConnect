@@ -1,9 +1,9 @@
 package com.tkforgeworks.cookconnect.socialservice.service;
 
 import com.tkforgeworks.cookconnect.socialservice.clients.UserServiceFeignClient;
+import com.tkforgeworks.cookconnect.socialservice.common.dto.UserServiceResponseDto;
 import com.tkforgeworks.cookconnect.socialservice.model.SocialInteraction;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
-import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialCreateResponseDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.model.mapper.SocialInteractionMapper;
 import com.tkforgeworks.cookconnect.socialservice.repository.SocialInteractionRepository;
@@ -48,7 +48,7 @@ public class SocialInteractionService {
         if (socialInteractionRepository.existsSocialInteractionByForUserId(forUserId)) {
             throw new RuntimeException(String.format("Social Interaction already exists for user %s", forUserId));
         }
-        SocialCreateResponseDto responseDto = getUserFromExt(forUserId);
+        UserServiceResponseDto responseDto = getUserFromExt(forUserId);
         addSiToUser(responseDto);
         SocialInteraction socialInteraction = new SocialInteraction();
         socialInteraction.setForUserId(responseDto.id());
@@ -129,13 +129,13 @@ public class SocialInteractionService {
 
     @CircuitBreaker(name = "main", fallbackMethod = "fallbackGetUserFromExt")
     @Retry(name = "main")
-    private SocialCreateResponseDto getUserFromExt(String forUserId) {
+    private UserServiceResponseDto getUserFromExt(String forUserId) {
         return userServiceFeignClient.getUserById(forUserId);
     }
 
     @CircuitBreaker(name = "main", fallbackMethod = "fallbackUserServiceAddSI")
     @Retry(name = "main")
-    private void addSiToUser(SocialCreateResponseDto responseDto) {
+    private void addSiToUser(UserServiceResponseDto responseDto) {
         userServiceFeignClient.addSocialInteraction(responseDto.id());
     }
 
@@ -144,12 +144,12 @@ public class SocialInteractionService {
         throw new RuntimeException(e.getMessage());
     }
 
-    private SocialCreateResponseDto fallbackGetUserFromExt(String forUserId, Exception e) {
+    private UserServiceResponseDto fallbackGetUserFromExt(String forUserId, Exception e) {
         log.error("user create social interaction failed for user id {}", forUserId);
         throw new RuntimeException(e.getMessage());
     }
 
-    private void fallbackUserServiceAddSI(SocialCreateResponseDto responseDto, Exception e) {
+    private void fallbackUserServiceAddSI(UserServiceResponseDto responseDto, Exception e) {
         log.error("error updating user {}", responseDto.id());
         throw new RuntimeException(e.getMessage());
     }

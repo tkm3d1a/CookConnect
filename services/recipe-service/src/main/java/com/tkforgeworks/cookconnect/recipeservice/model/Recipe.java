@@ -24,8 +24,8 @@ public class Recipe {
     @Column(nullable = false)
     private String title;
     private String description;
-    @Column(nullable = false)
-    private Long createdBy;
+    private String createdBy;
+    private String createdByUsername;
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
