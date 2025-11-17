@@ -1,12 +1,14 @@
 package com.tkforgeworks.cookconnect.socialservice.service;
 
 import com.tkforgeworks.cookconnect.socialservice.clients.UserServiceFeignClient;
+import com.tkforgeworks.cookconnect.socialservice.common.dto.UserServiceResponseDto;
 import com.tkforgeworks.cookconnect.socialservice.model.SocialInteraction;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
-import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialCreateResponseDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
 import com.tkforgeworks.cookconnect.socialservice.model.mapper.SocialInteractionMapper;
 import com.tkforgeworks.cookconnect.socialservice.repository.SocialInteractionRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,13 +44,12 @@ public class SocialInteractionService {
         return foundSI.getBookmarkedRecipeIds().stream().toList();
     }
 
-    @Transactional
     public void createNewSocial(String forUserId) {
         if (socialInteractionRepository.existsSocialInteractionByForUserId(forUserId)) {
             throw new RuntimeException(String.format("Social Interaction already exists for user %s", forUserId));
         }
-        SocialCreateResponseDto responseDto = userServiceFeignClient.getUserById(forUserId);
-        userServiceFeignClient.addSocialInteraction(responseDto.id());
+        UserServiceResponseDto responseDto = getUserFromExt(forUserId);
+        addSiToUser(responseDto);
         SocialInteraction socialInteraction = new SocialInteraction();
         socialInteraction.setForUserId(responseDto.id());
         socialInteractionRepository.save(socialInteraction);
@@ -106,12 +107,12 @@ public class SocialInteractionService {
         socialInteractionRepository.save(foundSI);
     }
 
-    @Transactional
     public void removeSocialInteraction(String forUserId) {
         SocialInteraction foundSI = findOrThrow(forUserId);
-        userServiceFeignClient.removeSocialInteraction(foundSI.getForUserId());
+        userExtRemoveSocialInteraction(foundSI.getForUserId());
         socialInteractionRepository.delete(foundSI);
     }
+
     /*
     PRIVATE helper methods only
         used to eliminate repetitive or long code sections used commonly
@@ -120,4 +121,36 @@ public class SocialInteractionService {
         return socialInteractionRepository.findById(socialId).orElseThrow(() -> new RuntimeException("user not found"));
     }
 
+    @CircuitBreaker(name = "main", fallbackMethod = "fallbackUserServiceRemoveSI")
+    @Retry(name = "main")
+    private void userExtRemoveSocialInteraction(String forUserId) {
+        userServiceFeignClient.removeSocialInteraction(forUserId);
+    }
+
+    @CircuitBreaker(name = "main", fallbackMethod = "fallbackGetUserFromExt")
+    @Retry(name = "main")
+    private UserServiceResponseDto getUserFromExt(String forUserId) {
+        return userServiceFeignClient.getUserById(forUserId);
+    }
+
+    @CircuitBreaker(name = "main", fallbackMethod = "fallbackUserServiceAddSI")
+    @Retry(name = "main")
+    private void addSiToUser(UserServiceResponseDto responseDto) {
+        userServiceFeignClient.addSocialInteraction(responseDto.id());
+    }
+
+    private void fallbackUserServiceRemoveSI(String forUserId, Exception e) {
+        log.error("user remove social interaction failed for user id {}", forUserId);
+        throw new RuntimeException(e.getMessage());
+    }
+
+    private UserServiceResponseDto fallbackGetUserFromExt(String forUserId, Exception e) {
+        log.error("user create social interaction failed for user id {}", forUserId);
+        throw new RuntimeException(e.getMessage());
+    }
+
+    private void fallbackUserServiceAddSI(UserServiceResponseDto responseDto, Exception e) {
+        log.error("error updating user {}", responseDto.id());
+        throw new RuntimeException(e.getMessage());
+    }
 }

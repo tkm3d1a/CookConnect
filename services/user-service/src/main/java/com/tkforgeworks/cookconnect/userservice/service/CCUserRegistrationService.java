@@ -7,6 +7,8 @@ import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserRegistrationRequestDto;
 import com.tkforgeworks.cookconnect.userservice.model.mapper.UserServiceMapper;
 import com.tkforgeworks.cookconnect.userservice.repository.CCUserRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,13 +37,7 @@ public class CCUserRegistrationService {
         CCUser savedUser = null;
 
         try{
-            keycloakUserId = kcClient.createUser(
-                    requestDto.username(),
-                    requestDto.email(),
-                    requestDto.password(),
-                    requestDto.firstName(),
-                    requestDto.lastName()
-            );
+            keycloakUserId = kcCreateUser(requestDto);
         } catch (Exception e){
             log.error("Error while creating keycloak user", e);
             throw new RuntimeException("User registration failed: " + e.getMessage());
@@ -65,7 +61,7 @@ public class CCUserRegistrationService {
         } catch (Exception e){
             log.error("Error while saving user", e);
             log.error("Rolling back keycloak user creation");
-            kcClient.deleteUser(keycloakUserId);
+            kcDeleteUser(keycloakUserId);
         }
 
         return mapper.ccUserToCCUserDto(savedUser);
@@ -73,7 +69,40 @@ public class CCUserRegistrationService {
 
     public void deleteUser(String ccUserId) {
         log.info("Deleting user {}", ccUserId);
-        kcClient.deleteUser(ccUserId);
+        kcDeleteUser(ccUserId);
         log.info("Deleted user {}", ccUserId);
     }
+
+    /*
+    PRIVATE METHODS
+     */
+
+    @CircuitBreaker(name = "main", fallbackMethod = "fallbackKcCreateUser")
+    @Retry(name = "main")
+    private String kcCreateUser(CCUserRegistrationRequestDto requestDto) {
+        return kcClient.createUser(
+                requestDto.username(),
+                requestDto.email(),
+                requestDto.password(),
+                requestDto.firstName(),
+                requestDto.lastName()
+        );
+    }
+
+    @CircuitBreaker(name = "main", fallbackMethod = "fallbackKcDeleteUser")
+    @Retry(name = "main")
+    private void kcDeleteUser(String forId) {
+        kcClient.deleteUser(forId);
+    }
+
+    private String fallbackKcCreateUser(CCUserRegistrationRequestDto requestDto, Exception e) {
+        log.error("Fallback KC Create User", e);
+        throw new RuntimeException("Fallback KC Create User");
+    }
+
+    private void fallbackKcDeleteUser(String ccUserId, Exception e) {
+        log.error("Fallback KC Delete User", e);
+        throw new RuntimeException("Fallback KC Delete User");
+    }
+
 }

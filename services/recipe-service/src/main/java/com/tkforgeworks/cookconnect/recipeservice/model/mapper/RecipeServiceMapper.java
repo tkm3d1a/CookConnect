@@ -45,6 +45,6 @@ public interface RecipeServiceMapper {
     List<RecipeDto> toRecipeDtos(List<Recipe> recipes);
 
     RecipeSummaryDto toRecipeSummaryDto(Recipe recipe);
-    Recipe toRecipeFromCreateSimple(RecipeCreateSimpleDto recipeCreateSimpleDto);
-    Recipe toRecipeFromCreateDetailed(RecipeCreateDetailedDto recipeCreateDetailedDto);
+    Recipe toRecipeFromCreateSimple(RecipeCreateSimpleRequestDto recipeCreateSimpleRequestDto);
+    Recipe toRecipeFromCreateDetailed(RecipeCreateDetailedRequestDto recipeCreateDetailedRequestDto);
 }

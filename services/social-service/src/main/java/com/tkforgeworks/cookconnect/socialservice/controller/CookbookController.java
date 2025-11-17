@@ -4,6 +4,7 @@ import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookEntryDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookNoteDto;
 import com.tkforgeworks.cookconnect.socialservice.service.CookbookService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ public class CookbookController {
 
     //GET
     @GetMapping
+    @RateLimiter(name = "getAll")
     public ResponseEntity<List<CookbookDto>> getAllCookbooks() {
         return ResponseEntity.ok(cookbookService.getAllCookbooks());
     }

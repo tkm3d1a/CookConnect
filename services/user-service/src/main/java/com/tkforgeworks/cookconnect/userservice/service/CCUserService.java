@@ -1,5 +1,6 @@
 package com.tkforgeworks.cookconnect.userservice.service;
 
+import com.tkforgeworks.cookconnect.userservice.errorhandler.UserNotFoundException;
 import com.tkforgeworks.cookconnect.userservice.model.CCUser;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.NoProfileCCUserDTO;
@@ -54,7 +55,7 @@ public class CCUserService {
 
     public CCUserDto findUser(String ccUserId) {
         Optional<CCUser> ccUser = userRepository.findById(ccUserId);
-        return ccUser.map(mapper::ccUserToCCUserDto).orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)));
+        return ccUser.map(mapper::ccUserToCCUserDto).orElseThrow(() -> new UserNotFoundException(String.format("User with id %s not found", ccUserId)));
     }
 
     public List<CCUserDto> getAllUsers() {
@@ -92,7 +93,7 @@ public class CCUserService {
     }
 
     public void updateSocial(String ccUserId, boolean hasSocial) {
-        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(() -> new RuntimeException(String.format("User with id %s not found", ccUserId)));
+        CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(() -> new UserNotFoundException(String.format("User with id %s not found", ccUserId)));
         foundUser.setHasSocialInteraction(hasSocial);
         userRepository.save(foundUser);
     }

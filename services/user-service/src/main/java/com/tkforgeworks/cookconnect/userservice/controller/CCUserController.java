@@ -3,6 +3,7 @@ package com.tkforgeworks.cookconnect.userservice.controller;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.UpdateCCUserDTO;
 import com.tkforgeworks.cookconnect.userservice.service.CCUserService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,18 +12,19 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/cc-user")
 @RequiredArgsConstructor
 public class CCUserController {
     private final CCUserService ccUserService;
 
     //GET Mappings
     @GetMapping
+    @RateLimiter(name = "getAll")
     public ResponseEntity<List<CCUserDto>> getAllCCUsers() {
         return ResponseEntity.ok(ccUserService.getAllUsers());
     }
 
     @GetMapping("/{ccUserId}")
+    @RateLimiter(name = "perUser")
     public ResponseEntity<CCUserDto> getCCUser(@PathVariable("ccUserId") String ccUserId) {
         return ResponseEntity.ok(ccUserService.findUser(ccUserId));
     }

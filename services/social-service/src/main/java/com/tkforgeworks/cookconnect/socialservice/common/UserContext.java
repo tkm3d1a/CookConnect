@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Setter
 public class UserContext {
     public static final String AUTHORIZATION_HEADER = "Authorization";
-//    public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
     public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     public static final String USER_ID_HEADER = "X-User-Id";
     public static final String SOCIAL_ID_HEADER = "X-Social-Id";
