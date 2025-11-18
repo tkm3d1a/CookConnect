@@ -18,13 +18,13 @@ public class CCUserController {
 
     //GET Mappings
     @GetMapping("/")
-    @RateLimiter(name = "getAll")
+    @RateLimiter(name = "main")
     public ResponseEntity<List<CCUserDto>> getAllCCUsers() {
         return ResponseEntity.ok(ccUserService.getAllUsers());
     }
 
     @GetMapping("/{ccUserId}")
-    @RateLimiter(name = "perUser")
+    @RateLimiter(name = "main")
     public ResponseEntity<CCUserDto> getCCUser(@PathVariable("ccUserId") String ccUserId) {
         return ResponseEntity.ok(ccUserService.findUser(ccUserId));
     }

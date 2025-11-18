@@ -13,7 +13,7 @@ import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.http;
 import static io.gatling.javaapi.http.HttpDsl.status;
 
-public class UserRegistrationAndRecipeStressTest extends Simulation{
+public class UserRegistrationAndRecipeConstantLoadTest extends Simulation{
     HttpProtocolBuilder httpProtocol = SimulationConfig.httpProtocol();
 
     // Create recipe with the newly registered user
@@ -57,39 +57,6 @@ public class UserRegistrationAndRecipeStressTest extends Simulation{
                     .check(status().saveAs("getAllStatus"))
     );
 
-    // Log what happened
-    ChainBuilder logResults = exec(session -> {
-        String username = session.getString("username");
-        String userId = session.getString("userId");
-
-        // Use getInt with default values
-        Integer firstStatus = session.contains("firstRecipeStatus")
-                ? session.getInt("firstRecipeStatus")
-                : null;
-        Integer secondStatus = session.contains("secondRecipeStatus")
-                ? session.getInt("secondRecipeStatus")
-                : null;
-        Integer getAllStatus = session.contains("getAllStatus")
-                ? session.getInt("getAllStatus")
-                : null;
-
-//        String statusMessage = "";
-//        if (firstStatus == null || secondStatus == null || getAllStatus == null) {
-//            statusMessage = "XXX FAILED - Request error";
-//        } else if (firstStatus == 429 || secondStatus == 429 || getAllStatus == 429) {
-//            statusMessage = "!!! RATE LIMITED";
-//        } else if (firstStatus == 503 || secondStatus == 503 || getAllStatus == 503) {
-//            statusMessage = "( ) CIRCUIT BREAKER OPEN";
-//        } else {
-//            statusMessage = "+++ SUCCESS";
-//        }
-//
-//        System.out.println(statusMessage + " - User: " + username +
-//                " (ID: " + userId + ") " +
-//                "Statuses: [" + firstStatus + ", " + secondStatus + ", " + getAllStatus + "]");
-        return session;
-    });
-
     ScenarioBuilder completeUserJourney = scenario("Complete User Journey - Stress Test")
             .exec(UserRegistrationHelper.generateUserData())
             .exec(UserRegistrationHelper.registerAndAuthenticate())
@@ -99,33 +66,17 @@ public class UserRegistrationAndRecipeStressTest extends Simulation{
             .pause(Duration.ofMillis(100))
             .exec(createSecondRecipe)
             .pause(Duration.ofMillis(100))
-            .exec(getAllRecipes)
-            .exec(logResults);
-
+            .exec(getAllRecipes);
 
     {
         setUp(
                 completeUserJourney.injectOpen(
-                        rampUsers(10).during(Duration.ofSeconds(10)),
-                        atOnceUsers(50),
-                        rampUsers(20).during(Duration.ofSeconds(10)),
-                        atOnceUsers(100),
-                        rampUsers(30).during(Duration.ofSeconds(10)),
-                        constantUsersPerSec(10).during(Duration.ofSeconds(30)),
-                        constantUsersPerSec(30).during(Duration.ofSeconds(30)),
-                        constantUsersPerSec(60).during(Duration.ofSeconds(30))
+                        constantUsersPerSec(10).during(Duration.ofMinutes(1)),
+                        constantUsersPerSec(30).during(Duration.ofMinutes(1)),
+                        constantUsersPerSec(60).during(Duration.ofMinutes(1))
 
-//                        atOnceUsers(50),
-//                        constantUsersPerSec(5).during(Duration.ofMinutes(1)),
-//                        rampUsers(100).during(Duration.ofSeconds(30))
                 )
         )
-//        setUp(
-//                completeUserJourney.injectOpen(
-//                        rampUsers(10).during(Duration.ofSeconds(30)),      // Slower ramp
-//                        constantUsersPerSec(5).during(Duration.ofMinutes(2)) // Lower rate
-//                )
-//        )
                 .protocols(httpProtocol)
                 .maxDuration(Duration.ofMinutes(10)) // Total test duration
                 .assertions(

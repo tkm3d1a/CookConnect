@@ -33,11 +33,11 @@ public class RateLimiterExplicitTest extends Simulation{
                 if (status == 200) {
                     int count = successCount.incrementAndGet();
                     if (count % 10 == 0) {
-                        System.out.println("✓ Successful requests: " + count);
+                        System.out.println("+++ Successful requests: " + count);
                     }
                 } else if (status == 429) {
                     int count = rateLimitCount.incrementAndGet();
-                    System.out.println("⚠️ RATE LIMITED! Total rate limits: " + count);
+                    System.out.println("!!! RATE LIMITED! Total rate limits: " + count);
                 }
                 return session;
             });

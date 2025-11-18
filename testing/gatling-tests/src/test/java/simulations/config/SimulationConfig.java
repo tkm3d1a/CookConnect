@@ -18,7 +18,7 @@ public class SimulationConfig {
     public static final String RECIPE_DETAILED_PATH = RECIPE_BASE_PATH + "/detailed";
     public static final String RECIPE_GET_ALL_PATH = RECIPE_BASE_PATH + "/";
 
-    public static final String USER_BASE_PATH = "/users/api/v1"; // UPDATE THIS!
+    public static final String USER_BASE_PATH = "/users/api/v1";
     public static final String USER_REGISTER_PATH = USER_BASE_PATH + "/register";
 
     public static HttpProtocolBuilder httpProtocol() {

@@ -20,7 +20,7 @@ public class CookbookController {
 
     //GET
     @GetMapping("/")
-    @RateLimiter(name = "getAll")
+    @RateLimiter(name = "main")
     public ResponseEntity<List<CookbookDto>> getAllCookbooks() {
         return ResponseEntity.ok(cookbookService.getAllCookbooks());
     }

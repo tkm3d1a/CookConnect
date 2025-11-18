@@ -24,7 +24,7 @@ public class RecipeController {
 
     //GET
     @GetMapping("/")
-    @RateLimiter(name = "getAll")
+    @RateLimiter(name = "main")
     @Cacheable(value = "recipePages", key = "#page + '-' + #size")
     public ResponseEntity<Page<RecipeSummaryDto>> getAllRecipes(
             @RequestParam(defaultValue = "0") int page,

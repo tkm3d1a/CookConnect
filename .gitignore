@@ -24,3 +24,5 @@
 .github/workflows/*.log
 .github/workflows/.runner/
 /docs/videos/
+/testing/helper/testRuns_16Nov2025/
+/testing/results/

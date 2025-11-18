@@ -21,7 +21,7 @@ public class CCUserRegistrationController {
     private final CCUserRegistrationService ccUserRegistrationService;
 
     @PostMapping("/register")
-    @RateLimiter(name = "perUser")
+    @RateLimiter(name = "main")
     public ResponseEntity<?> registerUser(@RequestBody CCUserRegistrationRequestDto requestDto) {
         try{
             CCUserDto user = ccUserRegistrationService.registerUser(requestDto);

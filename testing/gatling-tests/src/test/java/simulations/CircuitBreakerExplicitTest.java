@@ -36,10 +36,10 @@ public class CircuitBreakerExplicitTest extends Simulation {
                 int status = session.getInt("status");
                 int requestNum = session.getInt("requestNum");
                 String message = switch (status) {
-                    case 200, 201 -> "✓ Success";
-                    case 429 -> "⚠️ Rate Limited";
-                    case 503 -> "🔴 Circuit Breaker OPEN (Service Unavailable)";
-                    case 504 -> "🔴 Gateway Timeout";
+                    case 200, 201 -> "+++ Success";
+                    case 429 -> "!!! Rate Limited";
+                    case 503 -> "( ) Circuit Breaker OPEN (Service Unavailable)";
+                    case 504 -> "(T) Gateway Timeout";
                     default -> "? Unknown status: " + status;
                 };
                 System.out.println("Request " + requestNum + ": " + message);
