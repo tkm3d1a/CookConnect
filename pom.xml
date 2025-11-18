@@ -21,6 +21,9 @@
         <module>servers/config-server</module>
         <module>servers/eureka-server</module>
         <module>servers/gateway-server</module>
+
+        <!-- TESTING -->
+        <module>testing/gatling-tests</module>
     </modules>
 
     <properties>

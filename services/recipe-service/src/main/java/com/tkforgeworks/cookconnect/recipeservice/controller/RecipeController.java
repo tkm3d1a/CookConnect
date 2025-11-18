@@ -7,14 +7,15 @@ import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeSummaryDto;
 import com.tkforgeworks.cookconnect.recipeservice.service.RecipeService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,10 +23,18 @@ public class RecipeController {
     private final RecipeService recipeService;
 
     //GET
-    @GetMapping
-    @RateLimiter(name = "getAll")
-    public ResponseEntity<List<RecipeSummaryDto>> getAllRecipes() {
-        return ResponseEntity.ok(recipeService.getAllRecipesSummary());
+    @GetMapping("/")
+    @RateLimiter(name = "main")
+    @Cacheable(value = "recipePages", key = "#page + '-' + #size")
+    public ResponseEntity<Page<RecipeSummaryDto>> getAllRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String[] sort
+    ) {
+        Sort.Direction direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort[0]));
+        Page<RecipeSummaryDto> recipes = recipeService.getAllRecipesSummary(pageable);
+        return ResponseEntity.ok(recipes);
     }
     //POST
     @PostMapping("/simple")

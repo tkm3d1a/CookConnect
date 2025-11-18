@@ -23,7 +23,7 @@ public class SocialInteractionController {
 
     //GET
     @GetMapping("/{socialId}")
-    @RateLimiter(name = "perUser")
+    @RateLimiter(name = "main")
     public ResponseEntity<SocialInteractionDto> getSocialInteraction(@PathVariable("socialId") String socialId) {
         return ResponseEntity.ok(socialInteractionService.getSocialProfile(socialId));
     }
@@ -51,7 +51,7 @@ public class SocialInteractionController {
         return ResponseEntity.accepted().body(socialInteractionService.bookmarkTargetRecipe(socialId, targetRecipeId));
     }
     @PostMapping("/{socialId}/create-cookbook") //TODO: Migrate to cookbooks controller
-    @RateLimiter(name = "perUser")
+    @RateLimiter(name = "main")
     public ResponseEntity<SocialInteractionDto> createCookbookForSI(@PathVariable("socialId") String socialId,
                                                                     @RequestBody CookbookDto cookbookDto) {
         return ResponseEntity.accepted().body(socialInteractionService.createCookBookForSI(socialId, cookbookDto));
@@ -59,7 +59,7 @@ public class SocialInteractionController {
 
     @PostMapping("/{forUserId}")
     @PreAuthorize("hasRole('cookconnect_admin') or @authorizationHelper.canAccessUserResource(#forUserId)")
-    @RateLimiter(name = "perUser")
+    @RateLimiter(name = "main")
     public ResponseEntity<?> createSocialInteraction(@PathVariable("forUserId") String forUserId) {
         log.debug("Received forUserId parameter: {}", forUserId);
 

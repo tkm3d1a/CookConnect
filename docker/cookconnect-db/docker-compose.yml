@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - recipes-data:/var/lib/mysql
+      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf
     networks:
       cookconnect-network:
     ports:
@@ -18,6 +19,7 @@ services:
     restart: unless-stopped
     volumes:
       - socials-data:/var/lib/mysql
+      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf
     networks:
       cookconnect-network:
     ports:
@@ -31,6 +33,7 @@ services:
     restart: unless-stopped
     volumes:
       - users-data:/var/lib/mysql
+      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf
     networks:
       cookconnect-network:
     ports:

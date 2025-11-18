@@ -1,0 +1,36 @@
+# mysql.cnf
+[mysqld]
+# Connection settings
+max_connections = 300
+max_user_connections = 250
+connect_timeout = 10
+wait_timeout = 600
+interactive_timeout = 600
+
+# Memory settings
+innodb_buffer_pool_size = 512M
+innodb_log_file_size = 128M
+innodb_log_buffer_size = 16M
+
+# Performance tuning
+innodb_flush_log_at_trx_commit = 2
+innodb_flush_method = O_DIRECT
+innodb_file_per_table = 1
+
+# Query cache (disabled in MySQL 8.0)
+query_cache_type = 0
+query_cache_size = 0
+
+# Temp tables
+tmp_table_size = 64M
+max_heap_table_size = 64M
+
+# Thread settings
+thread_cache_size = 50
+
+# Binary logging (optional, disable for performance)
+skip-log-bin
+
+# Character set
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
