@@ -15,7 +15,7 @@ import java.util.Set;
 @ToString
 public class SocialInteraction {
     @Id
-    private Long forUserId;
+    private String forUserId;
 
     @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)
@@ -24,7 +24,7 @@ public class SocialInteraction {
             joinColumns = @JoinColumn(name = "user_id")
     )
     @Column(name = "following_user_id")
-    private Set<Long> followingIds = new HashSet<>();
+    private Set<String> followingIds = new HashSet<>();
 
     @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)
@@ -33,7 +33,7 @@ public class SocialInteraction {
             joinColumns = @JoinColumn(name = "user_id")
     )
     @Column(name = "follower_user_id")
-    private Set<Long> followerIds = new HashSet<>();
+    private Set<String> followerIds = new HashSet<>();
 
     @Setter(AccessLevel.NONE)
     @ElementCollection(fetch = FetchType.EAGER)

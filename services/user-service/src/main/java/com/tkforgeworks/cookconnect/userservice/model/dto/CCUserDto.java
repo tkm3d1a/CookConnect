@@ -5,7 +5,7 @@ import com.tkforgeworks.cookconnect.userservice.model.enums.SkillLevel;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public record CCUserDto(Long id,
+public record CCUserDto(String id,
                         String username,
                         String email,
                         boolean hasSocialInteraction,

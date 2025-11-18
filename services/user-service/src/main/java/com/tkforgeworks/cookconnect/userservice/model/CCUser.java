@@ -16,12 +16,20 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        indexes = {
+                @Index(name = "idx_user_username", columnList = "username", unique = true),
+                @Index(name = "idx_user_email", columnList = "email", unique = true),
+                @Index(name = "idx_user_created_at", columnList = "created_at")
+        }
+)
 public class CCUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36)
+    private String id;
+    @Column(unique = true)
     private String username;
-    private String password;
+    @Column(unique = true)
     private String email;
     private boolean hasSocialInteraction;
     private boolean privateAccount;
@@ -34,4 +42,15 @@ public class CCUser {
     private SkillLevel skillLevel;
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
     private ProfileInfo profileInfo;
+
+    public void setProfileInfo(ProfileInfo profileInfo) {
+        if (profileInfo == null) {
+            if (this.profileInfo != null) {
+                this.profileInfo.setUser(null);
+            }
+        } else {
+            profileInfo.setUser(this);
+        }
+        this.profileInfo = profileInfo;
+    }
 }

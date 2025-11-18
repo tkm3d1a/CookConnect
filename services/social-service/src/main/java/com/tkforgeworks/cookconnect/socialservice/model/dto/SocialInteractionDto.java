@@ -10,7 +10,7 @@ import java.util.Set;
  * DTO for {@link SocialInteraction}
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record SocialInteractionDto(Long forUserId, //required
+public record SocialInteractionDto(String forUserId, //required
                                    Set<Long> followingIds,
                                    Set<Long> followerIds,
                                    Set<Long> bookmarkedRecipeIds,

@@ -5,7 +5,7 @@
 
     <groupId>com.tkforgeworks.cookconnect</groupId>
     <artifactId>CookConnect</artifactId>
-    <version>0.0.6</version>
+    <version>0.1.0</version>
     <packaging>pom</packaging>
 
     <name>CookConnect</name>
@@ -18,8 +18,12 @@
         <module>services/user-service</module>
 
         <!-- SERVERS -->
-        <module>services/config-server</module>
-        <module>services/eureka-server</module>
+        <module>servers/config-server</module>
+        <module>servers/eureka-server</module>
+        <module>servers/gateway-server</module>
+
+        <!-- TESTING -->
+        <module>testing/gatling-tests</module>
     </modules>
 
     <properties>
@@ -34,6 +38,7 @@
         <docker.tag.version>${project.version}</docker.tag.version>
         <docker.namespace>tkforgeworks</docker.namespace>
         <docker.repo>docker.io</docker.repo>
+        <resilience4j.version>2.2.0</resilience4j.version>
     </properties>
 
     <dependencyManagement>
@@ -56,6 +61,11 @@
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
                 <version>${project.mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-bom</artifactId>
+                <version>${resilience4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -86,6 +96,7 @@
                                 <version>${project.lombok-mapstruct-binding.version}</version>
                             </path>
                         </annotationProcessorPaths>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>

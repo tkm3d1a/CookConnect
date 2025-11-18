@@ -1,5 +1,6 @@
 package com.tkforgeworks.cookconnect.userservice.model.mapper;
 
+import com.tkforgeworks.cookconnect.userservice.common.dto.UserServiceResponseDto;
 import com.tkforgeworks.cookconnect.userservice.model.CCUser;
 import com.tkforgeworks.cookconnect.userservice.model.ProfileInfo;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
@@ -13,6 +14,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface UserServiceMapper {
     CCUserDto ccUserToCCUserDto(CCUser ccUser);
+    UserServiceResponseDto ccUserDtoToUserServiceResponseDto(CCUserDto ccUserDto);
 
     List<CCUserDto> ccUsersToCCUserDtos(List<CCUser> ccUsers);
 

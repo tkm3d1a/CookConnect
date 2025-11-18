@@ -1,0 +1,16 @@
+services:
+  keycloak:
+    image: 'quay.io/keycloak/keycloak:26.4.2'
+    env_file:
+      - .env
+      - .env-kc
+    command:
+      - "start-dev"
+    ports:
+      - "8074:8080" # Expose Keycloak on port 8080 of the host
+    networks:
+      cookconnect-network:
+
+networks:
+  cookconnect-network:
+    external: true

@@ -1,0 +1,34 @@
+package com.tkforgeworks.cookconnect.userservice.controller;
+
+import com.tkforgeworks.cookconnect.userservice.common.dto.UserServiceResponseDto;
+import com.tkforgeworks.cookconnect.userservice.model.mapper.UserServiceMapper;
+import com.tkforgeworks.cookconnect.userservice.service.CCUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/internal")
+@RequiredArgsConstructor
+public class CCUserInternalController {
+    private final CCUserService ccUserService;
+    private final UserServiceMapper mapper;
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserServiceResponseDto> getCCUser(@PathVariable("userId") String ccUserId) {
+        return ResponseEntity.ok(mapper.ccUserDtoToUserServiceResponseDto(ccUserService.findUser(ccUserId)));
+    }
+
+    @PostMapping("/{userId}/social")
+    public ResponseEntity<?> addSocial(@PathVariable("userId") String ccUserId){
+        ccUserService.updateSocial(ccUserId, true);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{userId}/social")
+    public ResponseEntity<?> removeSocial(@PathVariable("userId") String ccUserId){
+        ccUserService.updateSocial(ccUserId, false);
+        return ResponseEntity.ok().build();
+    }
+}

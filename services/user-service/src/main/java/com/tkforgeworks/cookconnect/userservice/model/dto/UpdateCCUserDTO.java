@@ -4,7 +4,7 @@ import com.tkforgeworks.cookconnect.userservice.model.enums.SkillLevel;
 
 import java.io.Serializable;
 
-public record UpdateCCUserDTO(Long id,
+public record UpdateCCUserDTO(String id,
                               String username,
                               String email,
                               boolean hasSocialInteraction,
