@@ -7,7 +7,6 @@ import com.tkforgeworks.cookconnect.recipeservice.model.dto.IngredientDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.IngredientListDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.IngredientListItemDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.mapper.RecipeServiceMapper;
-import com.tkforgeworks.cookconnect.recipeservice.repository.IngredientListItemRepository;
 import com.tkforgeworks.cookconnect.recipeservice.repository.IngredientListRepository;
 import com.tkforgeworks.cookconnect.recipeservice.repository.IngredientRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class IngredientService {
     private final IngredientRepository ingredientRepository;
     private final IngredientListRepository ingredientListRepository;
-    private final IngredientListItemRepository ingredientListItemRepository;
+//    private final IngredientListItemRepository ingredientListItemRepository;
     private final RecipeServiceMapper mapper;
 
     //INTERNAL

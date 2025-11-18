@@ -6,18 +6,16 @@ import com.tkforgeworks.cookconnect.recipeservice.model.InstructionListItem;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.InstructionListDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.InstructionListItemDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.mapper.RecipeServiceMapper;
-import com.tkforgeworks.cookconnect.recipeservice.repository.InstructionListItemRepository;
 import com.tkforgeworks.cookconnect.recipeservice.repository.InstructionListRepository;
-import com.tkforgeworks.cookconnect.recipeservice.repository.InstructionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class InstructionService {
-    private final InstructionRepository instructionRepository;
+//    private final InstructionRepository instructionRepository;
     private final InstructionListRepository instructionListRepository;
-    private final InstructionListItemRepository instructionListItemRepository;
+//    private final InstructionListItemRepository instructionListItemRepository;
     private final RecipeServiceMapper mapper;
     //INTERNAL
     protected InstructionList createBlankList() {

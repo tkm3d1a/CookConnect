@@ -32,7 +32,7 @@ public class CCUserRegistrationService {
             throw new RuntimeException("Email already exists");
         }
 
-        log.info("Registering user {}", requestDto.username());
+        log.debug("Registering user {}", requestDto.username());
         String keycloakUserId;
         CCUser savedUser = null;
 
@@ -56,7 +56,7 @@ public class CCUserRegistrationService {
             ccUser.setProfileInfo(profileInfo);
 
             savedUser = ccUserRepository.save(ccUser);
-            log.info("Saved user with id {}: Username {}", savedUser.getId(), savedUser.getUsername());
+            log.debug("Saved user with id {}: Username {}", savedUser.getId(), savedUser.getUsername());
 
         } catch (Exception e){
             log.error("Error while saving user", e);
@@ -68,9 +68,9 @@ public class CCUserRegistrationService {
     }
 
     public void deleteUser(String ccUserId) {
-        log.info("Deleting user {}", ccUserId);
+        log.warn("Deleting user {}", ccUserId);
         kcDeleteUser(ccUserId);
-        log.info("Deleted user {}", ccUserId);
+        log.warn("Deleted user {}", ccUserId);
     }
 
     /*

@@ -46,7 +46,7 @@ public class KeycloakAdminClient {
 
         try{
             keycloakFeignClient.createUser(realm,"Bearer " + adminToken, userRequestDto);
-            log.info("Keycloak User created successfully: {}", username);
+            log.debug("Keycloak User created successfully: {}", username);
             return userIdFromResponse(username, adminToken);
         } catch(FeignException feignException){
             log.error("Failed to create keycloak user: {}",  feignException.getMessage());
@@ -59,7 +59,7 @@ public class KeycloakAdminClient {
 
         try{
             keycloakFeignClient.deleteUser(realm,"Bearer " + adminToken, userId);
-            log.info("Keycloak User deleted successfully: {}", userId);
+            log.debug("Keycloak User deleted successfully: {}", userId);
         } catch(FeignException feignException){
             log.error("Failed to delete keycloak user: {}",  feignException.getMessage());
         }
@@ -92,7 +92,7 @@ public class KeycloakAdminClient {
 
             if(users != null && !users.isEmpty()){
                 String userId = users.getFirst().get("id").toString();
-                log.info("User {} found: {}", userId, username);
+                log.debug("User {} found: {}", userId, username);
                 return userId;
             }
 

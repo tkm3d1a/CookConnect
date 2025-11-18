@@ -50,7 +50,7 @@ public class SocialInteractionController {
                                                                      @PathVariable("targetRecipeId") long targetRecipeId) {
         return ResponseEntity.accepted().body(socialInteractionService.bookmarkTargetRecipe(socialId, targetRecipeId));
     }
-    @PostMapping("/{socialId}/create-cookbook") //TODO: Migrate to cookbooks controller
+    @PostMapping("/{socialId}/create-cookbook")
     @RateLimiter(name = "main")
     public ResponseEntity<SocialInteractionDto> createCookbookForSI(@PathVariable("socialId") String socialId,
                                                                     @RequestBody CookbookDto cookbookDto) {
