@@ -2,7 +2,7 @@
 
 > A practical recipe management platform with social features, built with Spring Boot microservices
 
-[![Version](https://img.shields.io/badge/version-0.0.5-blue.svg)](https://github.com/tkm3d1a/cookconnect)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/tkm3d1a/cookconnect)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -51,7 +51,7 @@ To simplify recipe management for home cooks while fostering a supportive commun
 
 ## Current Status
 
-**Version**: 0.0.5 - CRUD Phase Complete
+**Version**: 0.1.0 - Service Discovery & Gateway Complete
 
 ### ✅ Completed
 - [x] Microservices architecture foundation
@@ -66,20 +66,22 @@ To simplify recipe management for home cooks while fostering a supportive commun
 - [x] Global exception handling for all services
 - [x] DTO pattern with MapStruct mappers
 - [x] Service layer business logic
+- [x] Service discovery (Eureka Server)
+- [x] API Gateway (Spring Cloud Gateway)
+- [x] Performance testing framework (Gatling)
 
 ### 🚧 In Progress
 - [ ] API documentation (Swagger/OpenAPI - Issue #6)
-- [ ] Service-to-service communication
+- [ ] Service-to-service communication through Gateway
 - [ ] Authentication and authorization (planned: Keycloak)
 - [ ] Comprehensive test coverage
 
 ### 📋 Planned
 - [ ] Frontend application
-- [ ] API Gateway
-- [ ] Service discovery (Eureka)
 - [ ] Circuit breakers and resilience patterns
 - [ ] Pagination for list endpoints
 - [ ] Advanced search and filtering
+- [ ] Load balancing and routing rules
 
 ## Features
 
@@ -173,24 +175,37 @@ CookConnect follows a **microservices architecture** with database-per-service p
 ### Services
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                     CookConnect Platform                     │
-├─────────────────┬─────────────────┬──────────────────────────┤
-│  User Service   │ Recipe Service  │   Social Service         │
-│                 │                 │                          │
-│ • User Identity │ • Recipe Data   │ • Social Graph           │
-│ • Profiles      │ • Ingredients   │ • Bookmarks              │
-│ • Addresses     │ • Instructions  │ • Cookbooks              │
-│ • Auth          │ • Tags          │ • Follows                │
-│                 │                 │                          │
-│  users-db       │  recipes-db     │  socials-db              │
-│  (MySQL)        │  (MySQL)        │  (MySQL)                 │
-└─────────────────┴─────────────────┴──────────────────────────┘
-                           │
-                  ┌────────┴────────┐
-                  │  Config Server  │
-                  │ (Spring Cloud)  │
-                  └─────────────────┘
+                    ┌─────────────────────┐
+                    │   API Gateway       │
+                    │   (Port 8080)       │
+                    │  Spring Cloud GW    │
+                    └──────────┬──────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+    ┌─────────▼────────┐  ┌───▼──────────┐  ┌──▼──────────────┐
+    │  User Service    │  │Recipe Service│  │ Social Service  │
+    │   (Port 8081)    │  │ (Port 8082)  │  │  (Port 8083)    │
+    │                  │  │              │  │                 │
+    │ • User Identity  │  │ • Recipes    │  │ • Social Graph  │
+    │ • Profiles       │  │ • Ingredients│  │ • Bookmarks     │
+    │ • Addresses      │  │ • Instructions│ │ • Cookbooks     │
+    │ • Auth           │  │ • Tags       │  │ • Follows       │
+    │                  │  │              │  │                 │
+    │  users-db        │  │  recipes-db  │  │  socials-db     │
+    │  (MySQL:3308)    │  │(MySQL:3306)  │  │ (MySQL:3307)    │
+    └──────────────────┘  └──────────────┘  └─────────────────┘
+              │                │                │
+              └────────────────┼────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+    ┌─────────▼────────┐  ┌───▼──────────┐     │
+    │  Eureka Server   │  │Config Server │     │
+    │   (Port 8761)    │  │ (Port 8888)  │     │
+    │ Service Discovery│◄─┤Centralized   │◄────┘
+    │                  │  │Configuration │
+    └──────────────────┘  └──────────────┘
 ```
 
 ### Design Principles
@@ -208,9 +223,11 @@ CookConnect provides RESTful APIs for all microservices. Each service runs on a 
 
 | Service | Port | Base URL | Status |
 |---------|------|----------|--------|
+| API Gateway | 8080 | `http://localhost:8080` | ✅ Active |
 | User Service | 8081 | `http://localhost:8081` | ✅ Active |
 | Recipe Service | 8082 | `http://localhost:8082` | ✅ Active |
 | Social Service | 8083 | `http://localhost:8083` | ✅ Active |
+| Eureka Server | 8761 | `http://localhost:8761` | ✅ Active |
 | Config Server | 8888 | `http://localhost:8888` | ✅ Active |
 
 ### User Service API (`/cc-user`)
@@ -615,18 +632,48 @@ This compiles all microservices and runs tests.
 
 #### 7. Run Services
 
-**Important**: Services must be started in the correct order. The Config Server must start first, followed by other services.
+**Important**: Services must be started in the correct order for proper initialization.
+
+**Startup Order:**
+1. Config Server (8888)
+2. Eureka Server (8761)
+3. Gateway Server (8080)
+4. Microservices (8081-8083)
 
 **Step 1 - Start Config Server:**
 ```bash
-cd services/config-server
+cd servers/config-server
 mvn spring-boot:run
 ```
 
 Wait for the Config Server to fully start (look for "Started ConfigServerApplication" in the logs).
 The Config Server will be available at `http://localhost:8888`.
 
-**Step 2 - Start Microservices** (in separate terminal windows):
+**Step 2 - Start Eureka Server:**
+
+Open a new terminal window and set environment variables.
+
+```bash
+cd servers/eureka-server
+mvn spring-boot:run
+```
+
+Wait for Eureka to start (look for "Started EurekaserverApplication" in the logs).
+Access the Eureka dashboard at `http://localhost:8761`.
+
+**Step 3 - Start Gateway Server:**
+
+Open a new terminal window and set environment variables.
+
+```bash
+cd servers/gateway-server
+mvn spring-boot:run
+```
+
+Wait for the Gateway to start and register with Eureka.
+The Gateway will be available at `http://localhost:8080`.
+
+**Step 4 - Start Microservices** (in separate terminal windows):
 
 Open new terminal windows for each service and set environment variables in each.
 
@@ -648,7 +695,10 @@ cd services/social-service
 mvn spring-boot:run
 ```
 
-Each service will connect to the Config Server on startup to fetch its configuration.
+Each service will:
+- Connect to the Config Server to fetch its configuration
+- Register with Eureka Server for service discovery
+- Become available through the API Gateway
 
 #### 8. Verify Installation
 
@@ -660,13 +710,31 @@ docker ps
 
 You should see three MySQL containers running.
 
-Check service health:
+Check infrastructure services:
+```bash
+# Config Server
+curl http://localhost:8888/actuator/health
+
+# Eureka Server - view dashboard
+open http://localhost:8761  # macOS
+# or navigate to http://localhost:8761 in your browser
+
+# Gateway Server
+curl http://localhost:8080/actuator/health
+```
+
+Check microservices health:
 ```bash
 # Health check endpoints (Actuator)
 curl http://localhost:8081/actuator/health  # User Service
 curl http://localhost:8082/actuator/health  # Recipe Service
 curl http://localhost:8083/actuator/health  # Social Service
 ```
+
+Verify service registration with Eureka:
+- Open the Eureka dashboard at `http://localhost:8761`
+- You should see all services (Gateway, User, Recipe, Social) listed as registered instances
+- Each service should show status "UP"
 
 #### 9. Test the APIs
 
@@ -858,8 +926,8 @@ CookConnect/                               # Main application repository
 │   └── running-services.md                # Service running guide
 ├── docker/                                # Docker configurations
 │   ├── databases/                         # Database Docker Compose
-│   │   ├── database-compose.yml
-│   │   └── .env files
+│   │   ├── docker-compose.yml             # Database stack configuration
+│   │   └── .env files                     # Database environment variables
 │   └── [env-specific directories]         # IDE, test, stage, prod environments
 ├── services/                              # Microservices
 │   ├── user-service/                      # User management microservice
@@ -885,22 +953,40 @@ CookConnect/                               # Main application repository
 │   │   │   ├── errorhandler/              # Global exception handling
 │   │   │   └── config/                    # Service configuration
 │   │   └── pom.xml
-│   ├── social-service/                    # Social features microservice
-│   │   ├── src/main/java/com/tkforgeworks/cookconnect/socialservice/
-│   │   │   ├── controller/                # REST controllers (CookbookController, SocialInteractionController)
-│   │   │   ├── model/                     # Social entities
-│   │   │   │   ├── dto/                   # Data Transfer Objects
-│   │   │   │   └── mapper/                # MapStruct mappers
-│   │   │   ├── repository/                # Spring Data repositories
-│   │   │   ├── service/                   # Business logic
-│   │   │   ├── errorhandler/              # Global exception handling
-│   │   │   └── config/                    # Service configuration
-│   │   └── pom.xml
-│   └── config-server/                     # Spring Cloud Config Server
-│       ├── src/main/resources/
-│       │   └── application.properties     # Points to config repo
+│   └── social-service/                    # Social features microservice
+│       ├── src/main/java/com/tkforgeworks/cookconnect/socialservice/
+│       │   ├── controller/                # REST controllers (CookbookController, SocialInteractionController)
+│       │   ├── model/                     # Social entities
+│       │   │   ├── dto/                   # Data Transfer Objects
+│       │   │   └── mapper/                # MapStruct mappers
+│       │   ├── repository/                # Spring Data repositories
+│       │   ├── service/                   # Business logic
+│       │   ├── errorhandler/              # Global exception handling
+│       │   └── config/                    # Service configuration
 │       └── pom.xml
+├── servers/                               # Infrastructure servers
+│   ├── config-server/                     # Spring Cloud Config Server
+│   │   ├── src/main/resources/
+│   │   │   └── application.yml            # Config server settings
+│   │   └── pom.xml
+│   ├── eureka-server/                     # Netflix Eureka Service Discovery
+│   │   ├── src/main/java/com/tkforgeworks/cookconnect/eurekaserver/
+│   │   │   ├── EurekaserverApplication.java
+│   │   │   └── logging/                   # Eureka diagnostics
+│   │   ├── src/main/resources/
+│   │   │   └── application.yml            # Eureka server settings
+│   │   └── pom.xml
+│   └── gateway-server/                    # Spring Cloud Gateway
+│       ├── src/main/resources/
+│       │   └── application.yml            # Gateway routing configuration
+│       └── pom.xml
+├── testing/                               # Testing modules
+│   ├── gatling-tests/                     # Performance testing
+│   │   ├── src/test/java/                 # Gatling simulation scenarios
+│   │   └── pom.xml
+│   └── helper/                            # Testing utilities
 ├── pom.xml                                # Parent POM
+├── CHANGELOG.md                           # Release notes and version history
 └── README.md                              # This file
 
 CookConnect-config/                        # External configuration repository
@@ -912,9 +998,15 @@ CookConnect-config/                        # External configuration repository
 ├── social-service/
 │   ├── social-service.properties
 │   └── social-service-{profile}.properties
-└── user-service/
-    ├── user-service.properties
-    └── user-service-{profile}.properties
+├── user-service/
+│   ├── user-service.properties
+│   └── user-service-{profile}.properties
+├── eureka-server/
+│   ├── eureka-server.properties
+│   └── eureka-server-{profile}.properties
+└── gateway-server/
+    ├── gateway-server.properties
+    └── gateway-server-{profile}.properties
 ```
 
 **Note**: The `CookConnect-config` repository is separate and contains all service configurations. It must be cloned independently (see [Getting Started](#getting-started)).
@@ -966,6 +1058,31 @@ Handles social interactions including user follows, recipe bookmarks, and cookbo
 
 Centralized configuration management for all microservices using Spring Cloud Config.
 
+#### Eureka Server
+**Package**: `com.tkforgeworks.cookconnect.eurekaserver`
+**Port**: 8761
+
+Service discovery and registration using Netflix Eureka, enabling microservices to locate and communicate with each other dynamically.
+
+**Key Components**:
+- **Application**: `EurekaserverApplication` - Main Eureka Server application
+- **Diagnostics**: `EurekaDiagnostics` - Monitors and logs service registration events
+- **Features**: Service registration, health monitoring, instance management
+
+**Dashboard**: Access the Eureka dashboard at `http://localhost:8761` to view registered services and their status.
+
+#### Gateway Server
+**Package**: `com.tkforgeworks.cookconnect.gatewayserver`
+**Port**: 8080
+
+API Gateway providing a unified entry point for all microservices using Spring Cloud Gateway with reactive WebFlux.
+
+**Key Features**:
+- Dynamic routing to registered services via Eureka
+- Load balancing across service instances
+- Centralized cross-cutting concerns (future: authentication, rate limiting)
+- Reactive, non-blocking architecture
+
 ## Documentation
 
 Comprehensive documentation is available in the `/docs` directory:
@@ -1005,11 +1122,17 @@ Docker images are built using Jib Maven Plugin:
 cd services/user-service
 mvn compile jib:dockerBuild
 
+# Build image for a specific server
+cd servers/eureka-server
+mvn compile jib:dockerBuild
+
 # Images are tagged as:
 # tkforgeworks/cookconnect-user-service:latest
 # tkforgeworks/cookconnect-recipe-service:latest
 # tkforgeworks/cookconnect-social-service:latest
 # tkforgeworks/cookconnect-config-server:latest
+# tkforgeworks/cookconnect-eureka-server:latest
+# tkforgeworks/cookconnect-gateway-server:latest
 ```
 
 ### Running Tests
@@ -1369,7 +1492,7 @@ To skip validation for a specific PR (emergency fixes only):
 
 ## Roadmap
 
-### Version 0.1.0 (Current - CRUD Phase Complete) ✅
+### Version 0.1.0 (Released - Service Discovery & Gateway) ✅
 - ✅ Microservices architecture foundation
 - ✅ Data models and database schema
 - ✅ REST API implementation (CRUD operations)
@@ -1378,6 +1501,11 @@ To skip validation for a specific PR (emergency fixes only):
 - ✅ User service (full CRUD)
 - ✅ Recipe service (create/read operations)
 - ✅ Social service (full CRUD for cookbooks and interactions)
+- ✅ Config Server for centralized configuration
+- ✅ Eureka Server for service discovery
+- ✅ API Gateway with Spring Cloud Gateway
+- ✅ Performance testing framework with Gatling
+- ✅ Docker support with Jib
 
 ### Version 0.2.0 (Next - Enhanced Features)
 - Complete recipe service (update/delete operations)
@@ -1385,6 +1513,7 @@ To skip validation for a specific PR (emergency fixes only):
 - Swagger/OpenAPI documentation
 - Pagination for list endpoints
 - Enhanced error responses with validation
+- Gateway routing configurations for all services
 
 ### Version 0.3.0 (Authentication & Security)
 - Authentication with Keycloak
@@ -1392,14 +1521,15 @@ To skip validation for a specific PR (emergency fixes only):
 - Role-based access control (RBAC)
 - Secure inter-service communication
 - User registration and login flows
+- OAuth2 integration
 
 ### Version 1.0.0 (MVP - Production Ready)
-- API Gateway (Spring Cloud Gateway)
-- Service discovery (Eureka)
 - Circuit breakers and resilience patterns
 - Comprehensive test coverage (unit, integration, e2e)
 - Monitoring and observability (Prometheus, Grafana)
 - Complete recipe management features
+- Distributed tracing
+- Centralized logging
 
 ### Version 1.1
 - Media upload and recipe photos
