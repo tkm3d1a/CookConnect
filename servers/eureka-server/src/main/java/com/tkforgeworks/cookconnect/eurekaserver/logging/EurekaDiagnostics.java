@@ -32,27 +32,27 @@ public class EurekaDiagnostics {
     public void logPeerStatus() {
         if (serverContext != null) {
             List<PeerEurekaNode> peers = serverContext.getPeerEurekaNodes().getPeerEurekaNodes();
-            log.info("===== EUREKA PEER STATUS =====");
-            log.info("Number of peers: {}",peers.size());
+            log.debug("===== EUREKA PEER STATUS =====");
+            log.debug("Number of peers: {}",peers.size());
 
             for (PeerEurekaNode peer : peers) {
-                log.info("Peer: {}",peer.getServiceUrl());
+                log.debug("Peer: {}",peer.getServiceUrl());
 
                 try {
                     Field targetHostField = peer.getClass().getDeclaredField("targetHost");
                     targetHostField.setAccessible(true);
                     String targetHost = (String) targetHostField.get(peer);
-                    log.info("\tTarget host: {}",targetHost);
+                    log.debug("\tTarget host: {}",targetHost);
 
                     Field batchingField = peer.getClass().getDeclaredField("batchingDispatcher");
                     batchingField.setAccessible(true);
                     Object batchingDispatcher = batchingField.get(peer);
-                    log.info("\tBatching dispatcher: {}",batchingDispatcher != null ? "Active" : "Inactive");
+                    log.debug("\tBatching dispatcher: {}",batchingDispatcher != null ? "Active" : "Inactive");
                 } catch (Exception e) {
-                    log.info("Unable to inspect internal state: {}",e.getMessage());
+                    log.debug("Unable to inspect internal state: {}",e.getMessage());
                 }
             }
-            log.info("==============================");
+            log.debug("==============================");
         }
     }
 
@@ -63,10 +63,10 @@ public class EurekaDiagnostics {
             matchIfMissing = false
     )
     public void checkEurekaRegistrations() {
-        log.info("===== EUREKA INSTANCE CHECK [Port: {}] =====", serverPort);
+        log.debug("===== EUREKA INSTANCE CHECK [Port: {}] =====", serverPort);
 
         if (serverContext == null || serverContext.getRegistry() == null) {
-            log.info("Registry not available");
+            log.debug("Registry not available");
             return;
         }
 
@@ -76,12 +76,12 @@ public class EurekaDiagnostics {
                 log.warn("WARNING: No EUREKA application registered!");
                 log.warn("This is why replicas show as unavailable!");
             } else {
-                log.info("EUREKA application found with {} instances",eurekaApp.getInstances().size());
+                log.debug("EUREKA application found with {} instances",eurekaApp.getInstances().size());
                 for (InstanceInfo instance : eurekaApp.getInstances()) {
-                    log.info("\tInstance: {}",instance.getInstanceId());
-                    log.info("\t\t- Host: {}:{}", instance.getHostName(),instance.getPort());
-                    log.info("\t\t- Status: {}",instance.getStatus());
-                    log.info("\t\t- Home URL: {}",instance.getHomePageUrl());
+                    log.debug("\tInstance: {}",instance.getInstanceId());
+                    log.debug("\t\t- Host: {}:{}", instance.getHostName(),instance.getPort());
+                    log.debug("\t\t- Status: {}",instance.getStatus());
+                    log.debug("\t\t- Home URL: {}",instance.getHomePageUrl());
 
                     // Check if this matches a peer URL
                     String instanceUrl = "http://" + instance.getHostName() + ":" + instance.getPort() + "/eureka/";
@@ -90,21 +90,21 @@ public class EurekaDiagnostics {
                         String peerUrl = peer.getServiceUrl();
                         if (peerUrl.equals(instanceUrl)) {
                             matchesPeer = true;
-                            log.info("\t\t- MATCHES PEER URL: {}",peerUrl);
+                            log.debug("\t\t- MATCHES PEER URL: {}",peerUrl);
                             break;
                         }
                     }
                     if (!matchesPeer) {
-                        log.info("\t\t- WARNING: Does not match any peer URL!");
+                        log.debug("\t\t- WARNING: Does not match any peer URL!");
                     }
                 }
             }
 
         } catch (Exception e) {
-            log.info("Error checking peer registrations: {}",e.getMessage());
+            log.debug("Error checking peer registrations: {}",e.getMessage());
         }
 
-        log.info("==================================================\n");
+        log.debug("==================================================\n");
     }
 
     @Scheduled(fixedDelay = 60000, initialDelay = 45000)
@@ -114,23 +114,23 @@ public class EurekaDiagnostics {
             matchIfMissing = false
     )
     public void checkAllRegisteredApplications() {
-        log.info("===== EUREKA REGISTRATION CHECK [Eureka Port: {}] =====", serverPort);
+        log.debug("===== EUREKA REGISTRATION CHECK [Eureka Port: {}] =====", serverPort);
 
         if (serverContext == null || serverContext.getRegistry() == null) {
-            log.info("Registry not available");
+            log.warn("Registry not available");
             return;
         }
 
         try {
-            log.info("All registered applications:");
+            log.debug("All registered applications:");
             for (Application app : serverContext.getRegistry().getSortedApplications()) {
-                log.info("\t- {} ({} instances)",app.getName(),app.getInstances().size());
+                log.debug("\t- {} ({} instances)",app.getName(),app.getInstances().size());
             }
 
         } catch (Exception e) {
-            log.info("Error checking registrations: {}",e.getMessage());
+            log.error("Error checking registrations: {}",e.getMessage());
         }
 
-        log.info("==================================================\n");
+        log.debug("==================================================\n");
     }
 }

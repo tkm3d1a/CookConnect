@@ -29,14 +29,10 @@ public class CCUserService {
         if(ccUserDto.id() != null){
             //checks if the user was passed with an id
             if(userRepository.existsById(ccUserDto.id())){
-                //pass user has ID and already exists in db
-                //TODO: UserExists Error
                 log.error("User with id {} already exists", ccUserDto.id());
                 throw new RuntimeException(String.format("User with id %s already exists", ccUserDto.id()));
             }
             if(!Objects.equals(ccUserDto.profileInfo().id(), ccUserDto.id())){
-                //user does not exist, but passed with ID that does not match profile info
-                //TODO: BadDTOFormat Error
                 log.error("User with id {} does not match profile info id {}", ccUserDto.id(), ccUserDto.profileInfo().id());
                 log.error("Passed user:\n{}", ccUserDto);
                 throw new RuntimeException(String.format("User with id %s does not match profile info id %s", ccUserDto.id(), ccUserDto.profileInfo().id()));
@@ -64,7 +60,6 @@ public class CCUserService {
 
     public CCUserDto updateUser(String ccUserId, UpdateCCUserDTO updateCCUserDTO) {
         if(!Objects.equals(updateCCUserDTO.id(), ccUserId)){
-            //TODO: BadRequestError
             log.error("User with id {} does not match id {}", updateCCUserDTO.id(), ccUserId);
             throw new RuntimeException(String.format("User with id %s does not match id %s", updateCCUserDTO.id(), ccUserId));
         }

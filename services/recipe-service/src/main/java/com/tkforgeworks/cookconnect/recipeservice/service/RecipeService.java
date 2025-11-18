@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RecipeService {
     private final RecipeRepository recipeRepository;
-    private final RecipeNoteService recipeNoteService;
+//    private final RecipeNoteService recipeNoteService;
     private final TagService tagService;
     private final IngredientService ingredientService;
     private final InstructionService instructionService;
@@ -54,7 +54,7 @@ public class RecipeService {
 
 
     public RecipeDto createdDetailedRecipe(RecipeCreateDetailedRequestDto recipeCreateDetailedRequestDto) {
-        log.info("CreateDetailedRecipe:\n\t{}", recipeCreateDetailedRequestDto);
+        log.debug("CreateDetailedRecipe:\n\t{}", recipeCreateDetailedRequestDto);
         UserServiceResponseDto fetchedUser = getUserExt(recipeCreateDetailedRequestDto.createdBy());
         Recipe toCreate = mapper.toRecipeFromCreateDetailed(recipeCreateDetailedRequestDto);
         toCreate.setCreatedBy(fetchedUser.id());
