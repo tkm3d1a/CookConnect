@@ -43,6 +43,11 @@ public class CCUserController {
         return ResponseEntity.ok("Account closed");
     }
 
+//    @PostMapping("/{ccUserId}/open")
+//    public ResponseEntity<?> openCCUser(@PathVariable("ccUserId") String ccUserId) {
+//        ccUserService.openUserAccount(ccUserId);
+//    }
+
     //PUT Mapping
     @PutMapping("/{ccUserId}")
     public ResponseEntity<CCUserDto> updateCCUser(@PathVariable("ccUserId") String ccUserId,

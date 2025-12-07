@@ -1,6 +1,5 @@
 package com.tkforgeworks.cookconnect.userservice.config;
 
-import feign.Logger;
 import feign.Response;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
@@ -15,10 +14,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Slf4j
 public class KeycloakFeignConfig {
-    @Bean
-    Logger.Level feignLoggerLevel() {
-        return Logger.Level.FULL;
-    }
+//    @Bean
+//    Logger.Level feignLoggerLevel() {
+//        return Logger.Level.FULL;
+//    }
 
     @Bean
     public ErrorDecoder feignErrorDecoder() {

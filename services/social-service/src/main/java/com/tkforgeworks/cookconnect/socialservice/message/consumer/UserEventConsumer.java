@@ -4,6 +4,7 @@ import com.tkforgeworks.cookconnect.socialservice.message.model.UserChangeEvent;
 import com.tkforgeworks.cookconnect.socialservice.service.SocialInteractionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.function.Consumer;
@@ -14,6 +15,7 @@ import java.util.function.Consumer;
 public class UserEventConsumer {
     private final SocialInteractionService socialInteractionService;
 
+    @Bean
     public Consumer<UserChangeEvent> handleUserChange(){
         return event -> {
             log.debug("Received UserChange event: {}", event);

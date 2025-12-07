@@ -128,6 +128,7 @@ public class RecipeService {
                     String oldName = recipe.getCreatedByUsername();
                     String newName = oldName + " (CLOSED)";
                     recipe.setCreatedByUsername(newName);
+                    log.debug("Changing userName on recipe {}", recipe.getId());
                     recipeRepository.save(recipe);
                 }
             }
@@ -136,6 +137,7 @@ public class RecipeService {
                 for(Recipe recipe : usersRecipes){
                     recipe.setCreatedBy("anonymous");
                     recipe.setCreatedByUsername("anonymous");
+                    log.debug("Changing userName and userId on recipe {}", recipe.getId());
                     recipeRepository.save(recipe);
                 }
             }

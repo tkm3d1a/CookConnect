@@ -125,7 +125,11 @@ public class SocialInteractionService {
         log.debug("handling update to user account status: userId - {}, status - {}",
                 event.getUserId(),
                 status);
-        SocialInteraction foundSi = findOrThrow(event.getUserId());
+        SocialInteraction foundSi = socialInteractionRepository.findById(event.getUserId()).orElse(null);
+        if(foundSi == null){
+            log.debug("User does not have social interactions");
+            return;
+        }
         Set<String> followingUsers = foundSi.getFollowingIds();
         Set<String> followedByUsers = foundSi.getFollowerIds();
 

@@ -4,6 +4,7 @@ import com.tkforgeworks.cookconnect.recipeservice.message.model.UserChangeEvent;
 import com.tkforgeworks.cookconnect.recipeservice.service.RecipeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.function.Consumer;
@@ -14,19 +15,20 @@ import java.util.function.Consumer;
 public class UserEventConsumer {
     private final RecipeService recipeService;
 
+    @Bean
     public Consumer<UserChangeEvent> handleUserChange(){
         return event -> {
             log.debug("Received UserChange event: {}", event);
 
             try {
                 switch (event.getChangeType()){
-                    case ACCOUNT_CLOSED -> {
-                        recipeService.handleUserAccountStatus(event, "delete");
-                        log.debug("Account closed");
-                    }
                     case ACCOUNT_DELETED -> {
-                        recipeService.handleUserAccountStatus(event, "closed");
+                        recipeService.handleUserAccountStatus(event, "delete");
                         log.debug("Account deleted");
+                    }
+                    case ACCOUNT_CLOSED -> {
+                        recipeService.handleUserAccountStatus(event, "closed");
+                        log.debug("Account closed");
                     }
                     case PRIVACY_STATUS ->  {
                         recipeService.handleUserAccountStatus(event, "private");
