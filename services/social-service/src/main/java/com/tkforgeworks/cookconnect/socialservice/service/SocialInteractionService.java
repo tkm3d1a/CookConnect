@@ -2,6 +2,8 @@ package com.tkforgeworks.cookconnect.socialservice.service;
 
 import com.tkforgeworks.cookconnect.socialservice.clients.UserServiceFeignClient;
 import com.tkforgeworks.cookconnect.socialservice.common.dto.UserServiceResponseDto;
+import com.tkforgeworks.cookconnect.socialservice.errorhandler.UserNotFoundException;
+import com.tkforgeworks.cookconnect.socialservice.message.model.UserChangeEvent;
 import com.tkforgeworks.cookconnect.socialservice.model.SocialInteraction;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.CookbookDto;
 import com.tkforgeworks.cookconnect.socialservice.model.dto.SocialInteractionDto;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -85,7 +89,6 @@ public class SocialInteractionService {
         return mapper.toSocialInteractionDto(socialInteractionRepository.save(foundSI));
     }
 
-    @Transactional
     public void unfollowTargetUser(String socialId, String targetUserId) {
         SocialInteraction foundSi = findOrThrow(socialId);
         SocialInteraction foundSITargetUser = findOrThrow(targetUserId);
@@ -95,8 +98,13 @@ public class SocialInteractionService {
         ){
             throw new RuntimeException(String.format("Not currently following target user id %s", targetUserId));
         }
-        socialInteractionRepository.save(foundSITargetUser);
-        socialInteractionRepository.save(foundSi);
+        try{
+            socialInteractionRepository.save(foundSITargetUser);
+            socialInteractionRepository.save(foundSi);
+        } catch(Exception e){
+            log.error(e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public void unbookmarkTargetRecipe(String socialId, long targetRecipeId) {
@@ -113,12 +121,44 @@ public class SocialInteractionService {
         socialInteractionRepository.delete(foundSI);
     }
 
+    public void handleUserAccountStatus(UserChangeEvent event, String status) {
+        log.debug("handling update to user account status: userId - {}, status - {}",
+                event.getUserId(),
+                status);
+        SocialInteraction foundSi = findOrThrow(event.getUserId());
+        Set<String> followingUsers = foundSi.getFollowingIds();
+        Set<String> followedByUsers = foundSi.getFollowerIds();
+
+        if(followingUsers.isEmpty() && followedByUsers.isEmpty()){
+            log.debug("User has no interactions to clean up");
+            return;
+        }
+
+        if(!followingUsers.isEmpty()){
+            for(String followingUser : followingUsers){
+                unfollowTargetUser(foundSi.getForUserId(), followingUser);
+            }
+            log.debug("Unfollowed all users");
+        }
+
+        if(!followedByUsers.isEmpty()){
+            for(String followedByUser : followedByUsers){
+                unfollowTargetUser(followedByUser, foundSi.getForUserId());
+            }
+            log.debug("Forced followedBy users to unfollow this user");
+        }
+
+        if(Objects.equals(status, "delete")){
+            socialInteractionRepository.delete(foundSi);
+        }
+    }
+
     /*
     PRIVATE helper methods only
         used to eliminate repetitive or long code sections used commonly
      */
     private SocialInteraction findOrThrow(String socialId) {
-        return socialInteractionRepository.findById(socialId).orElseThrow(() -> new RuntimeException("user not found"));
+        return socialInteractionRepository.findById(socialId).orElseThrow(() -> new UserNotFoundException("user not found"));
     }
 
     @CircuitBreaker(name = "main", fallbackMethod = "fallbackUserServiceRemoveSI")

@@ -2,6 +2,7 @@ package com.tkforgeworks.cookconnect.recipeservice.service;
 
 import com.tkforgeworks.cookconnect.recipeservice.clients.UserServiceFeignClient;
 import com.tkforgeworks.cookconnect.recipeservice.common.dto.UserServiceResponseDto;
+import com.tkforgeworks.cookconnect.recipeservice.message.model.UserChangeEvent;
 import com.tkforgeworks.cookconnect.recipeservice.model.Recipe;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateDetailedRequestDto;
 import com.tkforgeworks.cookconnect.recipeservice.model.dto.RecipeCreateSimpleRequestDto;
@@ -20,6 +21,8 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -104,5 +107,41 @@ public class RecipeService {
     private UserServiceResponseDto fallbackUserServiceGetExt(String ccUserId, Exception e) {
         log.error("fallbackUserServiceGetExt");
         throw new RuntimeException(e.getMessage());
+    }
+
+    public void handleUserAccountStatus(UserChangeEvent event, String status) {
+        log.debug("handling update to user account status: userId - {}, status - {}",
+                event.getUserId(),
+                status);
+        List<Recipe> usersRecipes = recipeRepository.findRecipeByCreatedBy(event.getUserId());
+        if(usersRecipes.isEmpty()){
+            log.debug("No Recipes found for user with id {}", event.getUserId());
+            return;
+        }
+        switch (status) {
+            case "private" -> {
+                log.warn("Privacy status change - not currently handled");
+            }
+            case "closed" -> {
+                log.debug("Changing userName on each recipe");
+                for(Recipe recipe : usersRecipes){
+                    String oldName = recipe.getCreatedByUsername();
+                    String newName = oldName + " (CLOSED)";
+                    recipe.setCreatedByUsername(newName);
+                    recipeRepository.save(recipe);
+                }
+            }
+            case "delete" -> {
+                log.debug("Removing userName and userId on each recipe");
+                for(Recipe recipe : usersRecipes){
+                    recipe.setCreatedBy("anonymous");
+                    recipe.setCreatedByUsername("anonymous");
+                    recipeRepository.save(recipe);
+                }
+            }
+            default -> {
+                log.warn("Unknown status - {}", status);
+            }
+        }
     }
 }

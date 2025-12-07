@@ -1,6 +1,8 @@
 package com.tkforgeworks.cookconnect.userservice.service;
 
 import com.tkforgeworks.cookconnect.userservice.errorhandler.UserNotFoundException;
+import com.tkforgeworks.cookconnect.userservice.message.model.UserChangeEvent;
+import com.tkforgeworks.cookconnect.userservice.message.producer.UserEventPublisher;
 import com.tkforgeworks.cookconnect.userservice.model.CCUser;
 import com.tkforgeworks.cookconnect.userservice.model.dto.CCUserDto;
 import com.tkforgeworks.cookconnect.userservice.model.dto.NoProfileCCUserDTO;
@@ -12,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,6 +28,7 @@ public class CCUserService {
     private final ProfileInfoService profileInfoService;
     private final CCUserRegistrationService userRegistrationService;
     private final UserServiceMapper mapper;
+    private final UserEventPublisher userEventPublisher;
 
     public CCUserDto createUser(CCUserDto ccUserDto) {
         if(ccUserDto.id() != null){
@@ -71,6 +76,23 @@ public class CCUserService {
         return mapper.ccUserToCCUserDto(updatedUser);
     }
 
+    public void closeUserAccount(String ccUserId) {
+        CCUser userToUpdate = userRepository.findById(ccUserId)
+                .orElseThrow(() -> new UserNotFoundException(String.format("User with id %s not found", ccUserId)));
+
+        userToUpdate.setClosedAccount(true);
+        CCUser updatedUser = userRepository.save(userToUpdate);
+
+        UserChangeEvent userChangeEvent = new UserChangeEvent();
+        userChangeEvent.setUserId(updatedUser.getId());
+        userChangeEvent.setChangeType(UserChangeEvent.ChangeType.ACCOUNT_CLOSED);
+        userChangeEvent.setTimestamp(LocalDateTime.now());
+        userChangeEvent.setChangeDetails(Map.of(
+                "hasSocialAccount", updatedUser.isHasSocialInteraction()
+        ));
+        userEventPublisher.publishUserChange(userChangeEvent);
+    }
+
     @Transactional
     public String deleteUserById(String ccUserId) {
         try{
@@ -80,6 +102,16 @@ public class CCUserService {
                     .getId();
             userRegistrationService.deleteUser(foundUserId);
             userRepository.deleteById(ccUserId);
+
+            UserChangeEvent userChangeEvent = new UserChangeEvent();
+            userChangeEvent.setUserId(ccUserId);
+            userChangeEvent.setChangeType(UserChangeEvent.ChangeType.ACCOUNT_DELETED);
+            userChangeEvent.setTimestamp(LocalDateTime.now());
+            userChangeEvent.setChangeDetails(Map.of(
+                    "userIdDeleted", ccUserId,
+                    "message", "User was successfully deleted"
+            ));
+            userEventPublisher.publishUserChange(userChangeEvent);
         } catch(Exception ex){
             log.error("User with id {} could not be deleted", ccUserId);
             throw new RuntimeException(String.format("User with id %s could not be deleted", ccUserId));
@@ -90,6 +122,19 @@ public class CCUserService {
     public void updateSocial(String ccUserId, boolean hasSocial) {
         CCUser foundUser = userRepository.findById(ccUserId).orElseThrow(() -> new UserNotFoundException(String.format("User with id %s not found", ccUserId)));
         foundUser.setHasSocialInteraction(hasSocial);
-        userRepository.save(foundUser);
+        LocalDateTime previousUpdateTime = foundUser.getUpdatedAt();
+        CCUser updatedUser = userRepository.save(foundUser);
+
+        UserChangeEvent userChangeEvent = new UserChangeEvent();
+        userChangeEvent.setUserId(ccUserId);
+        userChangeEvent.setChangeType(UserChangeEvent.ChangeType.ACCOUNT_UPDATED);
+        userChangeEvent.setTimestamp(LocalDateTime.now());
+        userChangeEvent.setChangeDetails(Map.of(
+                "change", "SocialStatusChange",
+                "previousStatus", !hasSocial,
+                "lastUpdatedAt", previousUpdateTime.toString(),
+                "updatedStatus", updatedUser.isHasSocialInteraction()
+        ));
+        userEventPublisher.publishUserChange(userChangeEvent);
     }
 }
