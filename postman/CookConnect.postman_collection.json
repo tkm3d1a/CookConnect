@@ -1,0 +1,642 @@
+{
+	"info": {
+		"_postman_id": "b74e5971-b237-4a25-90f4-c68dcd5be6be",
+		"name": "CookConnect",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24825934"
+	},
+	"item": [
+		{
+			"name": "Admin Auth - Keycloack",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Parse the JSON response\r",
+							"let data = pm.response.json();\r",
+							"\r",
+							"let col_access_token = data.access_token;\r",
+							"pm.collectionVariables.set(\"access_token\", col_access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Iml5M97urnNoZxDdu6kJT5tgPe70Y0U3",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "cookconnect",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "cc_admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8074/realms/tkforgeworks/protocol/openid-connect/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8074",
+					"path": [
+						"realms",
+						"tkforgeworks",
+						"protocol",
+						"openid-connect",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tim_test Auth - Keycloack",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Parse the JSON response\r",
+							"let data = pm.response.json();\r",
+							"\r",
+							"let col_access_token = data.access_token;\r",
+							"pm.collectionVariables.set(\"access_token\", col_access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Iml5M97urnNoZxDdu6kJT5tgPe70Y0U3",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "cookconnect",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "test",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8074/realms/tkforgeworks/protocol/openid-connect/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8074",
+					"path": [
+						"realms",
+						"tkforgeworks",
+						"protocol",
+						"openid-connect",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET all recipes",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{recipe-service}}/",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{recipe-service}}",
+						""
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "size",
+							"value": "5",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "recipes rateLimiters",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{recipe-service}}/actuator/ratelimiters",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{recipe-service}}",
+						"actuator",
+						"ratelimiters"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "recipes rateLimiterevents",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{recipe-service}}/actuator/ratelimiterevents/getAll",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{recipe-service}}",
+						"actuator",
+						"ratelimiterevents",
+						"getAll"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET all cookbooks",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{social-service}}/cookbooks",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{social-service}}",
+						"cookbooks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET all users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{user-service}}/",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{user-service}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET User by Id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{user-service}}/7785fa03-ffc9-4332-ae42-5469c08db401",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{user-service}}",
+						"7785fa03-ffc9-4332-ae42-5469c08db401"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete user by id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{user-service}}/7a04824e-7aa2-4e3f-9973-508ba43ec1c7",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{user-service}}",
+						"7a04824e-7aa2-4e3f-9973-508ba43ec1c7"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register New User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"test3\",\r\n    \"password\": \"test3\",\r\n    \"email\": \"test3@test.com\",\r\n    \"firstName\": \"test3\",\r\n    \"lastName\": \"test3\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{gateway-server}}/{{user-service}}/register",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{user-service}}",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create social interaction",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{social-service}}/ceb88fb1-679c-4901-b843-237b50cd9c71",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{social-service}}",
+						"ceb88fb1-679c-4901-b843-237b50cd9c71"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get social interactions",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{social-service}}/ceb88fb1-679c-4901-b843-237b50cd9c71",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{social-service}}",
+						"ceb88fb1-679c-4901-b843-237b50cd9c71"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Remove social interaction",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{social-service}}/890e14b2-93f0-4e36-849e-d565b4c3b4a9",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{social-service}}",
+						"890e14b2-93f0-4e36-849e-d565b4c3b4a9"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create simple recipe - anon",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"test - {{$randomAdjective}}\",\r\n    \"description\": \"test description - {{$randomAdjective}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{gateway-server}}/{{recipe-service}}/simple",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{recipe-service}}",
+						"simple"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create simple recipe - auth",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"test - {{$randomAdjective}}\",\r\n    \"description\": \"test description - {{$randomAdjective}}\",\r\n    \"createdBy\": \"7a04824e-7aa2-4e3f-9973-508ba43ec1c7\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{gateway-server}}/{{recipe-service}}/simple",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{recipe-service}}",
+						"simple"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Follow user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{gateway-server}}/{{social-service}}/0eecbe0a-0966-47b4-8b33-1e9ed4a32f24/follow/ceb88fb1-679c-4901-b843-237b50cd9c71",
+					"host": [
+						"{{gateway-server}}"
+					],
+					"path": [
+						"{{social-service}}",
+						"0eecbe0a-0966-47b4-8b33-1e9ed4a32f24",
+						"follow",
+						"ceb88fb1-679c-4901-b843-237b50cd9c71"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "local-config",
+			"value": ""
+		},
+		{
+			"key": "local-user-service",
+			"value": ""
+		},
+		{
+			"key": "local-social-service",
+			"value": ""
+		},
+		{
+			"key": "local-recipe-service",
+			"value": ""
+		},
+		{
+			"key": "gateway-server",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "recipe-service",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "social-service",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "user-service",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
