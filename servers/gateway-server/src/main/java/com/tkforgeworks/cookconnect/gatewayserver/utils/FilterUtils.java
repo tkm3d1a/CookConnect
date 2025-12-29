@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Component
 public class FilterUtils {
+    //TODO: Evaluate for removal
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String AUTHENTICATION_HEADER = "X-Authentication-Token";
     public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";

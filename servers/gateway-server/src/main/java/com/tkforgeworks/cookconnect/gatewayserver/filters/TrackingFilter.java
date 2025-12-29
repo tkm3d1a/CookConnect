@@ -18,6 +18,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class TrackingFilter implements GlobalFilter{
+    //TODO: Evaluate for removal
     private final FilterUtils filterUtils;
 
     @Override

@@ -1,4 +1,4 @@
-package com.tkforgeworks.cookconnect.eurekaserver.logging;
+package com.tkforgeworks.cookconnect.eurekaserver.logging; //Evaluate package name convention here
 
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.shared.Application;
@@ -18,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class EurekaDiagnostics {
+    //TODO: Evaluate for updates/logging
     private final EurekaServerContext serverContext;
 
     @Value("${server.port}")

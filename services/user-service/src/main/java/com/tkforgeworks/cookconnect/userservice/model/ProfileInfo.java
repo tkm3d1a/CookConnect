@@ -21,6 +21,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProfileInfo {
+    //TODO: Evaluate for removal - does it really need to be its own class??
     @Id
     private String id;
 

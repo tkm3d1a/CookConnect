@@ -26,7 +26,7 @@ public class RecipeController {
     @GetMapping("/")
     @RateLimiter(name = "main")
     @Cacheable(value = "recipePages", key = "#page + '-' + #size")
-    public ResponseEntity<Page<RecipeSummaryDto>> getAllRecipes(
+    public ResponseEntity<Page<RecipeSummaryDto>> getAllRecipes( //TODO: Evaluate paging and caching strategy used here
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt,desc") String[] sort
@@ -36,6 +36,9 @@ public class RecipeController {
         Page<RecipeSummaryDto> recipes = recipeService.getAllRecipesSummary(pageable);
         return ResponseEntity.ok(recipes);
     }
+    //TODO: Add find by username endpoint
+    //TODO: Add find by recipe name endpoint
+    //TODO: Add find by filter list endpoint (LONG TERM - Support large filter set)
     //POST
     @PostMapping("/simple")
     public ResponseEntity<RecipeDto> createSimpleRecipe(@RequestBody RecipeCreateSimpleRequestDto recipeCreateSimpleRequestDto) {
@@ -50,5 +53,7 @@ public class RecipeController {
         return ResponseEntity.created(location).body(createdRecipe);
     }
     //PUT
+    //TODO: Add recipe UPDATE endpoint(s)
     //DELETE
+    //TODO: Add recipe DELETE endpoint(s)
 }

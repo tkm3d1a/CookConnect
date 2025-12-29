@@ -36,7 +36,6 @@ public class RecipeService {
     private final RecipeServiceMapper mapper;
     private final UserServiceFeignClient  userServiceFeignClient;
 
-
     //GET
     public Page<RecipeSummaryDto> getAllRecipesSummary(Pageable pageable) {
         return recipeRepository.findAll(pageable).map(mapper::toRecipeSummaryDto);
@@ -54,7 +53,6 @@ public class RecipeService {
 
         return mapper.toRecipeDto(recipeRepository.save(toCreate));
     }
-
 
     public RecipeDto createdDetailedRecipe(RecipeCreateDetailedRequestDto recipeCreateDetailedRequestDto) {
         log.debug("CreateDetailedRecipe:\n\t{}", recipeCreateDetailedRequestDto);
@@ -109,6 +107,7 @@ public class RecipeService {
         throw new RuntimeException(e.getMessage());
     }
 
+    //MESSAGE HANDLING
     public void handleUserAccountStatus(UserChangeEvent event, String status) {
         log.debug("handling update to user account status: userId - {}, status - {}",
                 event.getUserId(),

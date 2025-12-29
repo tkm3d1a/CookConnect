@@ -12,7 +12,7 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserChangeEvent {
+public class UserChangeEvent { //TODO: This should be a common package/location since its a message
     public enum ChangeType{
         ACCOUNT_CREATED,
         ACCOUNT_UPDATED,
@@ -25,5 +25,5 @@ public class UserChangeEvent {
     private String userId;
     private ChangeType changeType;
     private LocalDateTime timestamp;
-    private Map<String, Object> changeDetails;
+    private Map<String, Object> changeDetails; //TODO: Evaluate to make more specific?
 }

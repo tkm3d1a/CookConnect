@@ -6,7 +6,7 @@ spring:
   cloud:
     config:
       server:
-        native:
+        native: #TODO: Evaluate for removal of native config path
           search-locations: classpath:/config
         git:
           uri: https://github.com/tkm3d1a/CookConnect-config.git
@@ -15,9 +15,9 @@ spring:
           search-paths: global,recipe-service,social-service,user-service,eureka-server,gateway-server
 
 encrypt:
-  key: '${ENCRYPT_KEY}'
+  key: '${ENCRYPT_KEY}' #TODO: Evaluate key storage/setup for config server
 
-management:
+management: #TODO: Update base management endpoints with proper security and auth rules
   endpoints:
     web:
       base-path: /actuator

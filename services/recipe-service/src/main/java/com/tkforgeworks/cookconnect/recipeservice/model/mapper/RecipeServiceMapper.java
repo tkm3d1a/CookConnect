@@ -9,6 +9,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface RecipeServiceMapper {
+    //TODO: Need to evaluate and remove unused items and setup correct mapping to improve reliability here
     //To DTO's
     RecipeDto toRecipeDto(Recipe recipe);
     @Mapping(source = "ingredients", target = "listItems")

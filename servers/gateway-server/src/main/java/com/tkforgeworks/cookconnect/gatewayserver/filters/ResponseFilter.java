@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 @Configuration
 @Slf4j
 public class ResponseFilter {
+    //TODO: Evaluate for removal
     @Bean
     public GlobalFilter postGlobalFilter(FilterUtils filterUtils) {
         return (exchange, chain) -> chain.filter(exchange).then(Mono.fromRunnable(() -> {

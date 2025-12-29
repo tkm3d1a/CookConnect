@@ -23,7 +23,7 @@ public class UserEventConsumer {
             try {
                 switch (event.getChangeType()){
                     case ACCOUNT_DELETED -> {
-                        recipeService.handleUserAccountStatus(event, "delete");
+                        recipeService.handleUserAccountStatus(event, "delete"); //TODO: Change 'status' to some enum to avoid string use
                         log.debug("Account deleted");
                     }
                     case ACCOUNT_CLOSED -> {
@@ -40,7 +40,7 @@ public class UserEventConsumer {
                 }
             } catch (Exception ex) {
                 log.error("Error handling UserChange event", ex);
-                throw ex;
+                throw ex; //TODO: More verbose exception output here
             }
         };
     }

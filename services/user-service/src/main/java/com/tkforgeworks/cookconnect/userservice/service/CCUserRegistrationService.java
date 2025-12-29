@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class CCUserRegistrationService {
-
+    //TODO: Evaluate flow for registration and changes to make self service on initial user creation
     private final CCUserRepository ccUserRepository;
     private final KeycloakAdminClient kcClient;
     private final UserServiceMapper mapper;

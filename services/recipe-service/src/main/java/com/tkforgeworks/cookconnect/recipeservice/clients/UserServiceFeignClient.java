@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
         configuration = FeignClientConfig.class
 )
 public interface UserServiceFeignClient {
+    //TODO: Evaluate needing internal call for userID?
     @GetMapping("/api/v1/internal/{userId}")
     UserServiceResponseDto getUserById(@PathVariable("userId") String userId);
 }
