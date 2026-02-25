@@ -11,8 +11,8 @@ import java.util.Set;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record SocialInteractionDto(String forUserId, //required
-                                   Set<Long> followingIds,
-                                   Set<Long> followerIds,
+                                   Set<String> followingIds,
+                                   Set<String> followerIds,
                                    Set<Long> bookmarkedRecipeIds,
                                    Set<CookbookDto> cookbooks)
         implements Serializable {}

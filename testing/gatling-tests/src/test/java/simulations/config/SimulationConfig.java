@@ -10,8 +10,8 @@ public class SimulationConfig {
     public static final String KEYCLOAK_REALM = "tkforgeworks";
     public static final String CLIENT_ID = "cookconnect";
     public static final String CLIENT_SECRET = System.getenv("KEYCLOAK_CLIENT_SECRET");
-    public static final String TEST_USERNAME = "tim_test";
-    public static final String TEST_PASSWORD = "tim1234";
+    public static final String TEST_USERNAME = "test";
+    public static final String TEST_PASSWORD = "test";
 
     public static final String RECIPE_BASE_PATH = "/recipes/api/v1";
     public static final String RECIPE_SIMPLE_PATH = RECIPE_BASE_PATH + "/simple";

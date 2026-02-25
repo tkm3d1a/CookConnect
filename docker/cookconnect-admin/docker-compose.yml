@@ -11,6 +11,105 @@ services:
     networks:
       cookconnect-network:
 
+  zookeeper:
+    image: 'zookeeper:3.8.4'
+    container_name: zookeeper
+    restart: unless-stopped
+    env_file:
+      - .env-zk
+    ports:
+      - "2181:2181"
+    networks:
+      cookconnect-network:
+
+  kafka:
+    image: "confluentinc/cp-kafka:7.5.11"
+    container_name: kafka
+    env_file:
+      - .env-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    networks:
+      cookconnect-network:
+
+  kafka-ui:
+    image: "kafbat/kafka-ui:v1.4.2"
+    container_name: kafka-ui
+    restart: unless-stopped
+    env_file:
+      - .env-kafka-ui
+    ports:
+      - "9999:8080"
+    depends_on:
+      - kafka
+    networks:
+      cookconnect-network:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
+    container_name: "elasticsearch"
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      cookconnect-network:
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.15
+    container_name: "logstash"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      cookconnect-network:
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.15
+    container_name: "kibana"
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    depends_on:
+      - elasticsearch
+    networks:
+      cookconnect-network:
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: "zipkin"
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      cookconnect-network:
+
+volumes:
+  elasticsearch-data:
+
 networks:
   cookconnect-network:
     external: true
