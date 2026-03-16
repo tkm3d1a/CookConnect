@@ -1,14 +1,12 @@
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
 
 ### Maven ###
 .mvn/
+**/target/
 
 ### VS Code ###
 .vscode/
@@ -17,28 +15,17 @@
 .DS_Store
 
 ### Env ###
-**/.env**
-**/target/
+**/.env*
+
+### Videos and large artifacts ###
+/docs/videos/
+/docs/source-code/*.zip
+
+### Testing artifacts ###
+/testing/helper/**
+!/testing/helper/.gitkeep
+/testing/results/
 
 ### GitHub Actions ###
 .github/workflows/*.log
 .github/workflows/.runner/
-/docs/videos/
-/testing/helper/testRuns_16Nov2025/
-/testing/results/
-/docs/source-code/CheckPoint-2-SourceCode-TimKlimpel.zip
-/.idea/runConfigurations/ConfigServerApplication.xml
-/.idea/runConfigurations/EurekaserverApplication.xml
-/.idea/runConfigurations/GatewayServerApplication.xml
-/.idea/runConfigurations/RecipeServiceApplication.xml
-/.idea/runConfigurations/RecipeServiceApplication__2.xml
-/.idea/runConfigurations/RecipeServiceApplication__3.xml
-/.idea/runConfigurations/RecipeServiceApplication__4.xml
-/.idea/runConfigurations/RecipeServiceApplication__5.xml
-/.idea/runConfigurations/SocialServiceApplication.xml
-/.idea/runConfigurations/SocialServiceApplication__2.xml
-/.idea/runConfigurations/SocialServiceApplication__3.xml
-/.idea/runConfigurations/UserServiceApplication.xml
-/.idea/runConfigurations/UserServiceApplication__2.xml
-/.idea/runConfigurations/UserServiceApplication__3.xml
-/.idea/runConfigurations/UserServiceApplication__4.xml
