@@ -2,7 +2,7 @@
 
 Tracked items that still need to be addressed before or during the repository transfer to self-hosted Gitea.
 
-> **Note:** This file and the rest of `docs/` are slated for migration to Confluence under the tkforgeworks space. Once migrated, remove the `docs/` directory from the repo entirely.
+> **Note:** This is the last remaining file in `docs/`. Once all items below are resolved, delete this file and the `docs/` directory.
 
 ---
 
@@ -62,23 +62,13 @@ All `.env` files under `docker/` were committed before the gitignore update. Run
 
 ---
 
-## 5. Migrate `docs/` to Confluence
+## ~~5. Migrate `docs/` to Confluence~~ DONE
 
-**Priority:** Low — can be done incrementally.
+Completed March 2026. The following pages were created under the CookConnect — Project Summary page in Confluence:
 
-The following files in `docs/` should be migrated to Confluence pages under the tkforgeworks space:
+- **CookConnect — Product Definition Document (PDD)** (from `cookconnect_pdd.md`)
+- **CookConnect — Canonical Data Model** (from `cookconnect_canonical_model.md`)
+- **CookConnect — Data Domain Reference (v0.0.1)** (from `cookconnect_data_domain_v0-0-1.md`)
+- **CookConnect — Architecture Deviations (v0.0.1)** (from `cookconnect_architecture_deviations_v0-0-1.md`)
 
-| File | Suggested Confluence Location |
-|------|-------------------------------|
-| `CookConnect_Refactor_Plan.md` | CC project space — Refactor epic documentation |
-| `cookconnect_canonical_model.md` | CC project space — Data model reference |
-| `cookconnect_data_domain_v0-0-1.md` | CC project space — Domain documentation |
-| `cookconnect_architecture_deviations_v0-0-1.md` | CC project space — Architecture decisions |
-| `documentation.md` | Becomes the Confluence space landing page |
-| `base-pom-setup.md` | CC project space — Developer setup |
-| `github-actions-setup.md` | CC project space — CI/CD (update for Gitea) |
-| `prereqs.md` | CC project space — Developer setup |
-| `running-services.md` | CC project space — Developer setup |
-| `cookconnect_pdd.md` | CC project space — Design documentation |
-
-After migration, remove `docs/` from the repo. Keep only `CLAUDE.md` and `README.md` in the repo root.
+Superseded/empty files removed: `CookConnect_Refactor_Plan.md` (superseded by Confluence Planning Session), `documentation.md`, `prereqs.md`, `running-services.md`, `base-pom-setup.md`, `github-actions-setup.md`, `models/CookConnect_UML.mdj`.
